@@ -67,7 +67,7 @@ Azure VM to test external client behavior during PostgreSQL failover.
 │ Scenario 4a: VM → PgBouncer Pooler → Manual Failover                │
 ├──────────────────────────────────────────────────────────────────────┤
 │ Purpose: Test manual failover from external client through PgBouncer│
-│          connection pooler (recommended production setup)            │
+│          connection pooler (recommended application setup)           │
 │                                                                      │
 │ Setup:                                                               │
 │   1. SSH to Azure VM                                                 │
@@ -94,7 +94,7 @@ Azure VM to test external client behavior during PostgreSQL failover.
 │ Scenario 4b: VM → PgBouncer Pooler → Simulated Failure              │
 ├──────────────────────────────────────────────────────────────────────┤
 │ Purpose: Test automatic failover from external client through       │
-│          PgBouncer during pod failure (best production scenario)     │
+│          PgBouncer during pod failure (best lab testing scenario)    │
 │                                                                      │
 │ Setup: Same as 4a                                                    │
 │                                                                      │
@@ -151,7 +151,7 @@ PgBouncer Connection (Scenarios 4a/4b):
   ✓ Automatic reconnection by PgBouncer
   ✓ Lower error rate (pooler handles retries)
   ✓ Smoother transaction continuity
-  ✓ Production-recommended approach
+  ✓ Application-recommended approach
 
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                      Prerequisites                                    ║

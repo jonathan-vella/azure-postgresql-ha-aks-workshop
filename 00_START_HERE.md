@@ -238,6 +238,8 @@ All documentation and troubleshooting guides are included:
 
 ---
 
-**Your PostgreSQL HA on AKS Workshop is production-ready and fully documented.** 
+**Your PostgreSQL HA on AKS Workshop is ready for lab and proof-of-concept testing.**
+
+> **Note**: This project is designed for lab environments and proof-of-concept purposes only. For production deployment, additional security hardening, compliance validation, monitoring, backup strategies, and operational procedures must be implemented. 
 
 **Next: Push to GitHub and share with your team! 🎉**
