@@ -59,6 +59,7 @@ config/*.secrets.json
 *.backup
 *.tmp
 *-temp.*
+.deployment-outputs
 
 # Cloud shell history
 .cloudshell_history
