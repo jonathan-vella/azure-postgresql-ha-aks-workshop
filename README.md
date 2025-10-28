@@ -8,6 +8,9 @@ A complete automation framework for deploying a **highly available, production-r
 
 ## 🏗️ Architecture Overview
 
+![PostgreSQL HA on AKS with PgBouncer](images/aks-cnpg-pgbouncer-architecture-rw.png)
+
+### Architecture Diagram
 ```mermaid
 graph TB
     subgraph "Azure Subscription"
@@ -18,6 +21,12 @@ graph TB
                     INF["Prometheus<br/>Monitoring"]
                 end
                 
+                subgraph "Connection Pooling Layer"
+                    PGB1["PgBouncer Pod 1<br/>Transaction Mode<br/>10K Connections"]
+                    PGB2["PgBouncer Pod 2<br/>Transaction Mode<br/>10K Connections"]
+                    PGB3["PgBouncer Pod 3<br/>Transaction Mode<br/>10K Connections"]
+                end
+                
                 subgraph "PostgreSQL Node Pool (3x E8as_v6)"
                     PG1["PostgreSQL Primary<br/>Instance 1<br/>200GB Data + WAL<br/>40K IOPS"]
                     PG2["PostgreSQL Sync Replica<br/>Instance 2 (Quorum)<br/>200GB Data + WAL<br/>40K IOPS"]
@@ -25,16 +34,21 @@ graph TB
                 end
                 
                 subgraph "Kubernetes Services"
-                    SVC_RW["Service: pg-primary-rw<br/>(Read-Write)<br/>Port 5432"]
-                    SVC_RO["Service: pg-primary-ro<br/>(Read-Only)<br/>Port 5432"]
+                    SVC_POOL_RW["Service: pg-primary-pooler-rw<br/>(PgBouncer Read-Write)<br/>Port 5432"]
+                    SVC_POOL_RO["Service: pg-primary-pooler-ro<br/>(PgBouncer Read-Only)<br/>Port 5432"]
+                    SVC_RW["Service: pg-primary-rw<br/>(Direct Read-Write)<br/>Port 5432"]
+                    SVC_RO["Service: pg-primary-ro<br/>(Direct Read-Only)<br/>Port 5432"]
                 end
             end
             
+            SVC_POOL_RW --> PGB1 & PGB2 & PGB3
+            SVC_POOL_RO --> PGB1 & PGB2 & PGB3
+            PGB1 & PGB2 & PGB3 -.->|Connection Pool| PG1
+            PGB1 & PGB2 & PGB3 -.->|Connection Pool| PG2 & PG3
             PG1 ===|Sync Replication<br/>RPO=0| PG2
             PG1 ---|Async Replication| PG3
-            PG1 --> SVC_RW
-            PG2 --> SVC_RO
-            PG3 --> SVC_RO
+            SVC_RW --> PG1
+            SVC_RO --> PG2 & PG3
         end
         
         subgraph "Storage & Backup"
@@ -62,6 +76,9 @@ graph TB
     style PG1 fill:#336791,stroke:#2d5a7b,color:#fff
     style PG2 fill:#336791,stroke:#2d5a7b,color:#fff
     style PG3 fill:#336791,stroke:#2d5a7b,color:#fff
+    style PGB1 fill:#47a8bd,stroke:#358a9c,color:#fff
+    style PGB2 fill:#47a8bd,stroke:#358a9c,color:#fff
+    style PGB3 fill:#47a8bd,stroke:#358a9c,color:#fff
     style SA fill:#0078d4,stroke:#0062a3,color:#fff
     style GRAF fill:#ff9830,stroke:#d67f1a,color:#fff
     style AMW fill:#0078d4,stroke:#0062a3,color:#fff
@@ -73,9 +90,11 @@ graph TB
 
 | Feature | Details |
 |---------|---------|
-| **High Availability** | 3-node PostgreSQL cluster (1 primary + 1 quorum sync replica + 1 async replica) with automatic failover |
+| **High Availability** | 3-node PostgreSQL cluster (1 primary + 1 quorum sync replica + 1 async replica) with automatic failover (<10s target) |
+| **Connection Pooling** | 3 PgBouncer instances in transaction mode (10,000 max connections, 25 default pool size per instance) for efficient connection management |
 | **Data Durability** | Synchronous replication (RPO = 0) - zero data loss on failover |
 | **Zone Redundancy** | Deployment across 3 Azure Availability Zones |
+| **Performance** | Optimized for 8,000-10,000 TPS with 40K IOPS Premium SSD v2 disks |
 | **Storage** | Premium SSD v2 with 40K IOPS & 1,250 MB/s throughput per disk (200 GiB each) |
 | **Backup & Recovery** | Automated WAL archiving + full backups to Azure Blob Storage, 7-day retention |
 | **Security** | Workload Identity, SCRAM-SHA-256 auth, NSGs, RBAC, encrypted backups |
@@ -144,12 +163,20 @@ kubectl get pods -n cnpg-database -l cnpg.io/cluster=pg-primary
 
 ### 4️⃣ Connect
 ```bash
-# Port forward
-kubectl port-forward svc/pg-primary-rw 5432:5432 -n cnpg-database &
+# Option 1: Connect via PgBouncer (Recommended for Production)
+kubectl port-forward svc/pg-primary-pooler-rw 5432:5432 -n cnpg-database &
+psql -h localhost -U app -d appdb
 
-# Connect with psql
+# Option 2: Direct connection to PostgreSQL
+kubectl port-forward svc/pg-primary-rw 5432:5432 -n cnpg-database &
 psql -h localhost -U app -d appdb
 ```
+
+**Why use PgBouncer?**
+- Handles 10,000+ concurrent connections efficiently
+- Reduces PostgreSQL connection overhead
+- Transaction-level pooling for optimal performance
+- Automatic load distribution across replicas
 
 ---
 
@@ -244,7 +271,56 @@ docs/
 
 ---
 
-## 📊 What Gets Deployed
+## � Connection Pooling with PgBouncer
+
+### Architecture
+The deployment includes **3 PgBouncer instances** for high-availability connection pooling:
+
+| Component | Configuration |
+|-----------|---------------|
+| **Instances** | 3 pods with pod anti-affinity (different nodes) |
+| **Mode** | Transaction pooling (optimal for OLTP workloads) |
+| **Max Connections** | 10,000 client connections per instance |
+| **Pool Size** | 25 PostgreSQL connections per user/database |
+| **Total Capacity** | 30,000 concurrent client connections across all instances |
+
+### Services
+```bash
+# PgBouncer services (Recommended)
+pg-primary-pooler-rw    # Read-write via connection pool
+pg-primary-pooler-ro    # Read-only via connection pool
+
+# Direct PostgreSQL services
+pg-primary-rw           # Direct read-write (no pooling)
+pg-primary-ro           # Direct read-only (no pooling)
+```
+
+### When to Use PgBouncer
+✅ **Use PgBouncer for:**
+- Applications with many short-lived connections
+- Microservices architectures
+- Serverless workloads (Azure Functions, AWS Lambda)
+- Connection-heavy applications (10K+ connections)
+- Production workloads requiring connection efficiency
+
+⚠️ **Direct connections for:**
+- Long-running analytical queries
+- Database administration tasks
+- Schema migrations
+- Backup/restore operations
+
+### Connection Examples
+```bash
+# Via PgBouncer (Production)
+psql "host=pg-primary-pooler-rw.cnpg-database.svc.cluster.local port=5432 dbname=appdb user=app"
+
+# Direct (Admin tasks)
+psql "host=pg-primary-rw.cnpg-database.svc.cluster.local port=5432 dbname=appdb user=app"
+```
+
+---
+
+## �📊 What Gets Deployed
 
 ### Azure Resources
 - ✅ Resource Group
@@ -262,11 +338,12 @@ docs/
 - ✅ CNPG Operator (cnpg-system namespace)
 - ✅ PostgreSQL Cluster (cnpg-database namespace)
   - 3 PostgreSQL instances (48 GiB RAM, 6 vCPU each)
+  - 3 PgBouncer pooler instances (transaction mode, 10K max connections)
   - 200GB data storage per instance
   - Premium SSD v2 disks (40,000 IOPS, 1,250 MB/s per disk)
   - Expected performance: 8,000-10,000 TPS sustained
 - ✅ StorageClass (managed-csi-premium-v2)
-- ✅ Services (read-write, read-only)
+- ✅ Services (pooler read-write, pooler read-only, direct read-write, direct read-only)
 - ✅ ConfigMaps & Secrets
 - ✅ PersistentVolumeClaims
 
@@ -369,10 +446,19 @@ CNPG_VERSION="0.26.1"
 
 ### Key Metrics
 ```
+# PostgreSQL Metrics
 pg_up                                   # Database health
 pg_stat_replication_lag_bytes            # Replication lag
 pg_database_size_bytes                   # Database size
 pg_wal_archive_status                    # Backup status
+
+# PgBouncer Metrics
+pgbouncer_pools_cl_active               # Active client connections
+pgbouncer_pools_sv_active               # Active server connections
+pgbouncer_pools_maxwait                 # Connection pool wait time
+pgbouncer_pools_cl_waiting              # Queued client connections
+
+# Infrastructure Metrics
 node_memory_MemAvailable_bytes           # Node memory
 ```
 
@@ -413,11 +499,11 @@ Before deployment:
 
 After deployment:
 - [ ] Cluster created
-- [ ] Pods running (3 PostgreSQL instances)
+- [ ] Pods running (3 PostgreSQL + 3 PgBouncer instances)
 - [ ] Storage provisioned
 - [ ] Backups to storage
 - [ ] Grafana accessible
-- [ ] Connection successful
+- [ ] Connection successful (both direct and pooled)
 
 ---
 
@@ -430,6 +516,12 @@ kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
 
 # Check cluster status
 kubectl cnpg status pg-primary -n cnpg-database
+
+# Check all pods (PostgreSQL + PgBouncer)
+kubectl get pods -n cnpg-database
+
+# Check PgBouncer logs
+kubectl logs -n cnpg-database -l cnpg.io/poolerName=pg-primary-pooler
 
 # Check storage
 kubectl get pvc -n cnpg-database
@@ -483,13 +575,15 @@ See `docs/README.md` for detailed troubleshooting.
 
 Your deployment is successful when:
 - ✅ 3 PostgreSQL pods running
+- ✅ 3 PgBouncer pooler pods running
 - ✅ Primary pod shows "Primary" status
 - ✅ Replica pods show "Standby (sync)"  
 - ✅ WAL archiving shows "OK"
 - ✅ Backups present in storage
-- ✅ Can connect via psql
+- ✅ Can connect via psql (both direct and pooled)
 - ✅ Grafana dashboard accessible
 - ✅ All PVCs bound and sized correctly
+- ✅ PgBouncer metrics showing active connections
 
 ---
 
