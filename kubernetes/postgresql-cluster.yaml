@@ -1,16 +1,16 @@
 # PostgreSQL HA Cluster Manifest - REFERENCE ONLY
 # 
 # NOTE: This file is NOT used during automated deployment.
-# The PostgreSQL cluster, storage class, and services are automatically
-# created by the deployment script: scripts/05-deploy-postgresql-cluster.sh
+# The PostgreSQL cluster is automatically created by:
+#   scripts/05-deploy-postgresql-cluster.sh
 #
-# This reference file shows the cluster configuration structure.
-# To customize the deployment, modify config/environment-variables.sh instead.
+# This reference file shows the cluster configuration structure with:
+# - Modern plugin-based backup (Barman Cloud Plugin)
+# - Manual PodMonitor (no deprecated enablePodMonitor)
+# - PgBouncer connection pooler
+# - Pod anti-affinity for HA
 #
-# For manual deployment using this manifest:
-# 1. Replace placeholders: ${PG_PRIMARY_CLUSTER_NAME}, ${PG_NAMESPACE}, etc.
-# 2. Update managed identity client ID
-# 3. Update storage account name
-# 4. Apply: kubectl apply -f kubernetes/postgresql-cluster.yaml
+# For actual deployment, the configuration is dynamically generated
+# from environment variables in config/environment-variables.sh
 #
-# See scripts/05-deploy-postgresql-cluster.sh for the active configuration.
+# See scripts/05-deploy-postgresql-cluster.sh for the complete implementation.

@@ -239,8 +239,6 @@ spec:
         memory: "2Gi"
       limits:
         memory: "4Gi"
-    monitoring:
-      enablePodMonitor: true
     # Pod anti-affinity: guarantee no two pooler pods on same node (eliminate SPOF)
     podTemplate:
       spec:
