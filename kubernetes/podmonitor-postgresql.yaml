@@ -1,0 +1,14 @@
+# PodMonitor for PostgreSQL cluster monitoring
+# Manually managed PodMonitor (replaces deprecated spec.monitoring.enablePodMonitor)
+# Collects metrics from all PostgreSQL instances in the cluster
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: pg-primary-cluster
+  namespace: cnpg-database
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: pg-primary
+  podMetricsEndpoints:
+  - port: metrics

@@ -33,6 +33,29 @@ volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 EOF
 
+# Deploy ObjectStore CRD for Barman Cloud Plugin
+echo "Creating ObjectStore resource for backup configuration..."
+kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: azure-backup-store
+  namespace: ${PG_NAMESPACE}
+spec:
+  configuration:
+    destinationPath: https://${PG_PRIMARY_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${PG_STORAGE_BACKUP_CONTAINER_NAME}/
+    azureCredentials:
+      inheritFromAzureAD: true
+    wal:
+      compression: gzip
+      maxParallel: 4
+    data:
+      compression: gzip
+      immediateCheckpoint: true
+      jobs: 4
+  retentionPolicy: "7d"
+EOF
+
 # Create PostgreSQL cluster manifest
 echo "Creating PostgreSQL cluster: $PG_PRIMARY_CLUSTER_NAME"
 kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
@@ -164,22 +187,12 @@ spec:
       labels:
         azure.workload.identity/use: "true"
   
-  backup:
-    barmanObjectStore:
-      destinationPath: https://${PG_PRIMARY_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${PG_STORAGE_BACKUP_CONTAINER_NAME}/
-      azureCredentials:
-        inheritFromAzureAD: true
-      wal:
-        compression: gzip
-        maxParallel: 4
-      data:
-        compression: gzip
-        immediateCheckpoint: true
-        jobs: 4
-    retentionPolicy: "7d"
-  
-  monitoring:
-    enablePodMonitor: true
+  # Backup configuration using Barman Cloud Plugin
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: azure-backup-store
   
   # PgBouncer connection pooler for high-concurrency workloads
   # Native CNPG pooler (not sidecar) - deployed as separate service
@@ -277,6 +290,22 @@ kubectl wait --for=condition=Ready \
     --context "$AKS_PRIMARY_CLUSTER_NAME" \
     -n "$PG_NAMESPACE" \
     cluster/"$PG_PRIMARY_CLUSTER_NAME"
+
+# Deploy PodMonitor for Prometheus metrics collection
+echo "Deploying PodMonitor for cluster monitoring..."
+kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ${PG_PRIMARY_CLUSTER_NAME}
+  namespace: ${PG_NAMESPACE}
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: ${PG_PRIMARY_CLUSTER_NAME}
+  podMetricsEndpoints:
+  - port: metrics
+EOF
 
 # Get cluster status
 echo "PostgreSQL cluster status:"

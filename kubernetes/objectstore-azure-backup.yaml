@@ -1,0 +1,31 @@
+# ObjectStore CRD for Azure Blob Storage backup configuration
+# Used by Barman Cloud Plugin for PostgreSQL backup/restore operations
+# Requires: Barman Cloud Plugin v0.8.0+ installed in cnpg-system namespace
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: azure-backup-store
+  namespace: cnpg-database
+spec:
+  configuration:
+    # Azure Blob Storage destination path
+    # Format: https://<storage-account>.blob.core.windows.net/<container>/
+    destinationPath: https://${PG_PRIMARY_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${PG_STORAGE_BACKUP_CONTAINER_NAME}/
+    
+    # Authentication using Azure AD Workload Identity (no secrets)
+    azureCredentials:
+      inheritFromAzureAD: true
+    
+    # WAL archiving configuration
+    wal:
+      compression: gzip
+      maxParallel: 4
+    
+    # Base backup configuration
+    data:
+      compression: gzip
+      immediateCheckpoint: true
+      jobs: 4
+  
+  # Retention policy - moved from Cluster spec
+  retentionPolicy: "7d"
