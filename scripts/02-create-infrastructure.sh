@@ -101,6 +101,44 @@ ALA_RESOURCE_ID=$(az monitor log-analytics workspace create \
     --query "id" \
     --output tsv)
 
+# Create Virtual Network for AKS and test VMs
+echo "Creating Virtual Network: ${AKS_PRIMARY_CLUSTER_NAME}-vnet"
+VNET_NAME="${AKS_PRIMARY_CLUSTER_NAME}-vnet"
+az network vnet create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$VNET_NAME" \
+    --location "$PRIMARY_CLUSTER_REGION" \
+    --address-prefixes 10.224.0.0/12 \
+    --query "newVNet.provisioningState" \
+    --output tsv
+
+# Create AKS subnet
+echo "Creating AKS subnet..."
+AKS_SUBNET_NAME="${AKS_PRIMARY_CLUSTER_NAME}-aks-subnet"
+AKS_SUBNET_ID=$(az network vnet subnet create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --vnet-name "$VNET_NAME" \
+    --name "$AKS_SUBNET_NAME" \
+    --address-prefixes 10.224.0.0/16 \
+    --query "id" \
+    --output tsv)
+
+# Create dedicated subnet for failover testing VMs (/27 = 32 IPs, 27 usable)
+echo "Creating VM subnet for failover testing..."
+VM_SUBNET_NAME="${AKS_PRIMARY_CLUSTER_NAME}-vm-subnet"
+VM_SUBNET_ID=$(az network vnet subnet create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --vnet-name "$VNET_NAME" \
+    --name "$VM_SUBNET_NAME" \
+    --address-prefixes 10.225.0.0/27 \
+    --query "id" \
+    --output tsv)
+
+echo "✓ Virtual Network created:"
+echo "  VNet: $VNET_NAME (10.224.0.0/12)"
+echo "  AKS Subnet: $AKS_SUBNET_NAME (10.224.0.0/16)"
+echo "  VM Subnet: $VM_SUBNET_NAME (10.225.0.0/27)"
+
 # Create AKS cluster
 echo "Creating AKS cluster: $AKS_PRIMARY_CLUSTER_NAME (this may take 10-15 minutes)"
 az aks create \
@@ -115,6 +153,7 @@ az aks create \
     --network-plugin azure \
     --network-plugin-mode overlay \
     --network-dataplane cilium \
+    --vnet-subnet-id "$AKS_SUBNET_ID" \
     --nodepool-name systempool \
     --os-sku AzureLinux \
     --enable-oidc-issuer \
@@ -216,7 +255,17 @@ export STORAGE_ACCOUNT_PRIMARY_RESOURCE_ID="$STORAGE_ACCOUNT_PRIMARY_RESOURCE_ID
 export GRAFANA_RESOURCE_ID="$GRAFANA_RESOURCE_ID"
 export AMW_RESOURCE_ID="$AMW_RESOURCE_ID"
 export ALA_RESOURCE_ID="$ALA_RESOURCE_ID"
+export VNET_NAME="$VNET_NAME"
+export AKS_SUBNET_NAME="$AKS_SUBNET_NAME"
+export AKS_SUBNET_ID="$AKS_SUBNET_ID"
+export VM_SUBNET_NAME="$VM_SUBNET_NAME"
+export VM_SUBNET_ID="$VM_SUBNET_ID"
 EOF
 
 echo "✓ Infrastructure creation complete!"
 echo "Outputs saved to: $OUTPUT_FILE"
+echo ""
+echo "Network Configuration:"
+echo "  VNet: $VNET_NAME (10.224.0.0/12)"
+echo "  AKS Subnet: $AKS_SUBNET_NAME ($AKS_SUBNET_ID)"
+echo "  VM Subnet: $VM_SUBNET_NAME ($VM_SUBNET_ID)"

@@ -18,23 +18,29 @@ azure-postgresql-ha-aks-workshop/
 │   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity)
 │   ├── 03-configure-workload-identity.sh # Federated credentials setup
 │   ├── 04-deploy-cnpg-operator.sh     # Installs CNPG operator via Helm
-│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster
+│   ├── 04a-install-barman-cloud-plugin.sh # Installs Barman Cloud Plugin (modern backup)
+│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer
 │   ├── 06-configure-monitoring.sh     # Configures Azure Monitor + Grafana
-│   ├── 07-test-pgbench.sh             # Tests pgbench performance tool
+│   ├── 07-test-pgbench.sh             # Tests pgbench (direct + pooler connections)
 │   ├── deploy-all.sh                  # ⭐ Master orchestration script (runs 02-06)
 │   └── setup-prerequisites.sh         # Installs required tools
 ├── kubernetes/
-│   └── postgresql-cluster.yaml        # Reference manifest (not directly used)
+│   ├── postgresql-cluster.yaml        # Reference manifest (not directly used)
+│   ├── objectstore-azure-backup.yaml  # ObjectStore CRD for Barman Cloud Plugin
+│   └── podmonitor-postgresql.yaml     # Manual PodMonitor for Prometheus metrics
 ├── .env                               # Auto-generated environment variables (gitignored)
 └── docs/
-    └── README.md                      # Comprehensive documentation
+    ├── README.md                      # Comprehensive documentation
+    └── FAILOVER_TESTING.md            # Failover testing guide (scenarios & automation)
 ```
 
 ### Key Files Explained:
 - **`.env`**: Auto-generated on devcontainer startup with unique resource names
 - **`config/environment-variables.sh`**: Template loaded by deployment scripts
 - **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates steps 02-06
-- **Scripts 02-06**: Individual deployment phases using Azure CLI (not Bicep)
+- **Scripts 02-06**: Individual deployment phases using Azure CLI and Helm
+- **Script 04a**: NEW - Installs Barman Cloud Plugin for modern backup architecture
+- **Script 07**: Tests both direct PostgreSQL and PgBouncer pooler connections
 
 ## 🔄 Deployment Flow
 
@@ -164,17 +170,18 @@ az account show  # Verify subscription
 # Ensure environment variables are loaded
 source .env  # or source config/environment-variables.sh
 
-# Run complete deployment (6 automated steps)
+# Run complete deployment (7 automated steps)
 bash scripts/deploy-all.sh
 ```
 
 This will execute all phases:
-1. Create Azure infrastructure (Resource Group, AKS, Storage, Identity)
+1. Create Azure infrastructure (Resource Group, AKS, Storage, Identity, VM Subnet)
 2. Configure Workload Identity with Federated Credentials
-3. Deploy CloudNativePG operator via Helm
-4. Deploy PostgreSQL HA cluster (3 instances)
-5. Configure Azure Monitor and Grafana
-6. Display connection information
+3. Deploy CloudNativePG operator via Helm (1.27.1)
+4. Install Barman Cloud Plugin v0.8.0 (modern backup architecture)
+5. Deploy PostgreSQL HA cluster (3 instances + 3 PgBouncer poolers)
+6. Configure Azure Monitor and Grafana
+7. Display connection information
 
 ### Step 4: Verify Deployment
 ```bash
@@ -184,42 +191,92 @@ az aks get-credentials --resource-group <rg-name> --name <cluster-name>
 # Check PostgreSQL cluster status
 kubectl cnpg status pg-primary -n cnpg-database
 
-# Check pods are running
-kubectl get pods -n cnpg-database -l cnpg.io/cluster=pg-primary
+# Check all pods (PostgreSQL + PgBouncer)
+kubectl get pods -n cnpg-database
+
+# Expected pods:
+# - 3x pg-primary-X (PostgreSQL instances)
+# - 3x pg-primary-pooler-XXXX (PgBouncer poolers)
 
 # View logs
 kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
 ```
 
+### Step 5: Test Connections
+```bash
+# Test via PgBouncer pooler (Recommended for applications)
+kubectl port-forward svc/pg-primary-pooler-rw 5432:5432 -n cnpg-database &
+psql -h localhost -U app -d appdb
+
+# Test direct PostgreSQL connection (For admin tasks)
+kubectl port-forward svc/pg-primary-rw 5433:5432 -n cnpg-database &
+psql -h localhost -p 5433 -U app -d appdb
+```
+
+### Step 6: Run Performance Tests
+```bash
+# Run comprehensive pgbench test (tests both direct and pooler)
+./scripts/07-test-pgbench.sh
+
+# Expected output:
+# - Phase 1: Connection verification (both endpoints)
+# - Phase 2: Schema initialization (scale 10 = ~160MB)
+# - Phase 3: Direct connection performance test (30s)
+# - Phase 4: Pooler connection performance test (30s)
+# - Phase 5: Cleanup
+```
+
 ## 📋 Key Features
 
 ✅ **3-Node High Availability**
-- 1 Primary + 2 Synchronous Replicas
-- Automatic failover across availability zones
-- Zero-downtime promotion
+- 1 Primary + 1 Quorum Sync Replica + 1 Async Replica
+- Automatic failover across availability zones (<10s target)
+- Synchronous quorum replication (RPO = 0, zero data loss)
 
-✅ **Premium v2 Storage**
-- Configurable IOPS (3100-40000)
-- Configurable Throughput (125-1200 MB/s)
+✅ **Connection Pooling with PgBouncer**
+- 3 PgBouncer instances in transaction mode
+- 10,000 max client connections per instance (30K total capacity)
+- 25 default pool size per user/database
+- Pod anti-affinity for high availability
+
+✅ **Premium v2 Storage (Optimized for 10K TPS)**
+- 40,000 IOPS per disk (configurable 3100-80000)
+- 1,250 MB/s throughput per disk (configurable 125-1200 MB/s)
+- 200 GiB per instance
 - Better price-performance than Premium SSD
+
+✅ **Enterprise-Grade Hardware**
+- Standard_E8as_v6 nodes (8 vCPU, 64 GiB RAM, AMD EPYC 9004)
+- PostgreSQL 17.0 with CloudNativePG 1.27.1
+- 48 GiB RAM, 6 vCPU per PostgreSQL instance
+- Azure Linux (CBL-Mariner) node OS
+
+✅ **Modern Backup Architecture**
+- Barman Cloud Plugin v0.8.0 (no deprecated features)
+- Azure Blob Storage with Workload Identity authentication
+- 7-day retention with point-in-time recovery (PITR)
+- WAL compression with gzip, 4 parallel streams
 
 ✅ **Azure Integration**
 - Workload Identity for secure authentication
-- Azure Blob Storage backups with PITR
+- Manual PodMonitor for Prometheus metrics
 - Azure Monitor + Grafana monitoring
 - Container insights enabled
 
 ✅ **Production Ready**
 - SCRAM-SHA-256 authentication
-- 7-day backup retention
-- WAL compression with lz4
+- Optimized PostgreSQL parameters for E8as_v6
+- Failover optimization (5s delays, 3s probe timeouts)
 - Automated health checks
+- CNPG 1.29.0+ compatible (zero deprecated configurations)
 
 ## 📊 Architecture Components
 
 ### Azure Infrastructure (Azure CLI)
 - Resource Group with random suffix
-- AKS cluster (1.32) with system and postgres node pools
+- AKS cluster (1.32) with Azure Linux node pools:
+  - System pool: 2 × Standard_D2s_v5
+  - PostgreSQL pool: 3 × Standard_E8as_v6 (8 vCPU, 64 GiB RAM)
 - Managed identities with Workload Identity + Federated Credentials
 - Log Analytics workspace
 - Azure Monitor Workspace
@@ -227,19 +284,35 @@ kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
 - Storage account for backups (ZRS)
 - Network security configured automatically
 
-### Kubernetes (CNPG)
-- PostgreSQL 16 cluster (3 instances)
-- Premium v2 StorageClass (4000 IOPS, 250 MB/s)
+### Kubernetes (CNPG 1.27.1)
+- PostgreSQL 17 cluster (3 instances)
+- PgBouncer pooler (3 instances, transaction mode)
+- Premium v2 StorageClass (40,000 IOPS, 1,250 MB/s per disk)
 - Service accounts with Azure Workload Identity
-- Monitoring via Prometheus + PodMonitor
-- LoadBalancer services for external access (primary R/W, replicas R/O)
+- Manual PodMonitor for Prometheus metrics
+- 4 Service endpoints:
+  - `pg-primary-pooler-rw` (PgBouncer read-write) ← **Recommended for apps**
+  - `pg-primary-pooler-ro` (PgBouncer read-only)
+  - `pg-primary-rw` (Direct read-write)
+  - `pg-primary-ro` (Direct read-only)
+
+### Backup Architecture (Modern Plugin-Based)
+- Barman Cloud Plugin v0.8.0
+- ObjectStore CRD for Azure Blob configuration
+- Gzip compression with 4 parallel WAL streams
+- 7-day retention with PITR
+- No deprecated configurations (CNPG 1.29+ ready)
 
 ### Configuration (Environment Variables)
 - All settings in `config/environment-variables.sh`
-- Tuned PostgreSQL parameters (embedded in deployment script)
-- 8GB memory per instance
-- 4000 IOPS / 250 MB/s throughput
-- Automated backups with 7-day retention
+- Tuned PostgreSQL parameters for E8as_v6:
+  - shared_buffers: 16GB
+  - effective_cache_size: 48GB
+  - work_mem: 64MB
+  - max_worker_processes: 12
+  - Optimized for 40K IOPS storage
+- Resource allocation: 48 GiB RAM, 6 vCPU per instance
+- Target performance: 8,000-10,000 TPS sustained
 
 ## 🔧 Customization
 
@@ -247,36 +320,44 @@ All configuration is in `config/environment-variables.sh`:
 
 ```bash
 # Azure settings
-PRIMARY_CLUSTER_REGION="canadacentral"        # Change region
+PRIMARY_CLUSTER_REGION="swedencentral"        # Change region
 AKS_CLUSTER_VERSION="1.32"                    # Change AKS version
 
-# VM sizes
+# VM sizes (Optimized for 10K TPS)
 SYSTEM_NODE_POOL_VMSKU="Standard_D2s_v5"      # System pool VM
-USER_NODE_POOL_VMSKU="Standard_D4s_v5"        # PostgreSQL pool VM
+USER_NODE_POOL_VMSKU="Standard_E8as_v6"       # PostgreSQL pool VM (8 vCPU, 64 GiB)
 
-# Storage (Premium v2)
-DISK_IOPS="4000"                              # Adjust IOPS (3100-40000)
-DISK_THROUGHPUT="250"                         # Adjust throughput (125-1200 MB/s)
-PG_STORAGE_SIZE="32Gi"                        # Adjust storage size
+# Storage (Premium v2 - High Performance)
+DISK_IOPS="40000"                             # Adjust IOPS (3100-80000)
+DISK_THROUGHPUT="1250"                        # Adjust throughput (125-1200 MB/s)
+PG_STORAGE_SIZE="200Gi"                       # Adjust storage size
 
-# PostgreSQL
+# PostgreSQL (Tuned for E8as_v6)
 PG_DATABASE_NAME="appdb"                      # Database name
 PG_DATABASE_USER="app"                        # Database user
 PG_DATABASE_PASSWORD="SecurePassword123!"     # CHANGE THIS!
-PG_MEMORY="8Gi"                               # Memory per instance
-PG_CPU="2"                                    # CPU per instance
+PG_MEMORY="48Gi"                              # Memory per instance (75% of 64GB)
+PG_CPU="6"                                    # CPU per instance (75% of 8 vCPU)
+
+# PgBouncer Pooler
+PG_POOLER_INSTANCES="3"                       # Number of pooler pods
+PG_POOLER_MAX_CONN="10000"                    # Max client connections per instance
+PG_POOLER_POOL_SIZE="25"                      # Default pool size per user/database
 
 # CNPG version
-CNPG_VERSION="0.22.1"                         # CloudNativePG operator version
+CNPG_VERSION="0.26.1"                         # CloudNativePG Helm chart version (operator 1.27.1)
 ```
 
 ## 📚 Documentation
 
 - **`docs/README.md`**: Complete deployment guide
+- **`docs/FAILOVER_TESTING.md`**: Comprehensive failover testing scenarios (manual + automated)
 - **`.github/copilot-instructions.md`**: AI assistant instructions
 - **`config/environment-variables.sh`**: Configuration reference
 - **`scripts/05-deploy-postgresql-cluster.sh`**: PostgreSQL cluster deployment with embedded configuration
 - **`kubernetes/postgresql-cluster.yaml`**: Reference manifest (not used in actual deployment)
+- **`kubernetes/objectstore-azure-backup.yaml`**: ObjectStore CRD for Barman Cloud Plugin
+- **`kubernetes/podmonitor-postgresql.yaml`**: Manual PodMonitor for Prometheus metrics
 
 ## 🔐 Security
 
@@ -315,11 +396,13 @@ CNPG_VERSION="0.22.1"                         # CloudNativePG operator version
    az account show  # Verify correct subscription
    ```
 
-5. **Configuration Review** (`config/deployment-config.json`):
+5. **Configuration Review** (`config/environment-variables.sh`):
    - AKS version (default: 1.32 - verify availability)
-   - VM sizes (system: D2s_v5, user: D4s_v5)
-   - Storage: Premium v2 with 4000 IOPS, 250 MB/s
-   - PostgreSQL: 3 instances, 8GB RAM, 2 CPU each
+   - VM sizes (system: D2s_v5, user: E8as_v6 - 8 vCPU, 64 GiB RAM)
+   - Storage: Premium v2 with 40,000 IOPS, 1,250 MB/s
+   - PostgreSQL: 3 instances, 48 GiB RAM, 6 vCPU each
+   - PgBouncer: 3 instances, 10K max connections each
+   - Target performance: 8,000-10,000 TPS
 
 6. **Public IP**:
    - Auto-detected when loading environment variables
@@ -329,14 +412,21 @@ CNPG_VERSION="0.22.1"                         # CloudNativePG operator version
 
 After deployment, verify:
 
-- [ ] AKS cluster created and running
-- [ ] CNPG operator deployed
+- [ ] AKS cluster created with Azure Linux nodes
+- [ ] CNPG operator deployed (1.27.1)
+- [ ] Barman Cloud Plugin installed (v0.8.0)
 - [ ] PostgreSQL cluster has 3 healthy instances
+- [ ] PgBouncer pooler has 3 healthy pods
 - [ ] WAL archiving shows "OK"
 - [ ] All pods running without errors
+- [ ] ObjectStore CRD deployed and configured
+- [ ] Manual PodMonitor created for metrics
 - [ ] Backups stored in Azure Blob Storage
 - [ ] Grafana dashboard accessible
-- [ ] Can connect to PostgreSQL (5432)
+- [ ] Can connect via pooler (recommended): `pg-primary-pooler-rw:5432`
+- [ ] Can connect direct (admin): `pg-primary-rw:5432`
+- [ ] pgbench tests pass (both direct and pooler)
+- [ ] Zero deprecated configurations (CNPG 1.29+ ready)
 
 ## 🆘 Need Help?
 
@@ -403,15 +493,33 @@ After deployment, verify:
 
 7. **Test Connection**:
    ```bash
-   kubectl port-forward svc/${PG_PRIMARY_CLUSTER_NAME}-rw 5432:5432 -n ${PG_NAMESPACE}
-   # In another terminal:
+   # Via PgBouncer pooler (Recommended)
+   kubectl port-forward svc/${PG_PRIMARY_CLUSTER_NAME}-pooler-rw 5432:5432 -n ${PG_NAMESPACE} &
    psql -h localhost -U $PG_DATABASE_USER -d $PG_DATABASE_NAME
+   
+   # Direct PostgreSQL (Admin tasks)
+   kubectl port-forward svc/${PG_PRIMARY_CLUSTER_NAME}-rw 5433:5432 -n ${PG_NAMESPACE} &
+   psql -h localhost -p 5433 -U $PG_DATABASE_USER -d $PG_DATABASE_NAME
    ```
 
-8. **Access Monitoring** (Grafana URL displayed after deployment):
+8. **Run Performance Tests**:
+   ```bash
+   # Comprehensive test (direct + pooler)
+   ./scripts/07-test-pgbench.sh
+   ```
+
+9. **Access Monitoring** (Grafana URL displayed after deployment):
    - View cluster metrics
+   - Monitor PgBouncer connection pools
    - Configure alerts
    - Monitor backups
+
+10. **Test Failover** (Optional):
+    ```bash
+    # See docs/FAILOVER_TESTING.md for comprehensive failover testing guide
+    # Tests both manual promotion and simulated failures
+    # Compares direct vs pooler connection behavior
+    ```
 
 ## 🎓 Learning Resources
 
