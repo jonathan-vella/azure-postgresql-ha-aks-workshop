@@ -144,12 +144,14 @@ kubectl apply --dry-run=client -f kubernetes/postgresql-cluster.yaml
 
 ### Integration Testing
 If deploying to Azure:
-1. Use non-production resource group for testing
+1. Use lab/non-production resource group for testing
 2. Test in region with Premium v2 support
 3. Verify all pods reach healthy state
 4. Test database connectivity
 5. Verify backups are created
 6. Clean up resources after testing
+
+> **Note**: This project is designed for lab and proof-of-concept environments. Any contributions should maintain this scope and not introduce production-specific dependencies or assumptions.
 
 ## Documentation Standards
 

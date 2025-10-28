@@ -40,7 +40,9 @@ Comprehensive failover testing for PostgreSQL HA on AKS, designed for **payment 
 
 
 
-This guide validates the PostgreSQL HA deployment for production readiness:- **Validate RPO = 0** (zero data loss during failover)
+This guide validates the PostgreSQL HA deployment for lab and proof-of-concept purposes:
+
+- **Validate RPO = 0** (zero data loss during failover)
 
 - **Measure RTO** (Recovery Time Objective - target <10 seconds)
 
@@ -334,7 +336,9 @@ If you prefer manual control:PG_POOLER_RW_SVC="${PG_PRIMARY_CLUSTER_NAME}-pooler
 
 
 
-# 2. Initialize test database**Note**: For VM access to ClusterIP services, we'll use `kubectl port-forward` from a bastion or expose services via LoadBalancer. For production, use Private Link or expose via internal LoadBalancer.
+# 2. Initialize test database
+
+**Note**: For VM access to ClusterIP services, we'll use `kubectl port-forward` from a bastion or expose services via LoadBalancer. For lab testing, this is sufficient. For production scenarios, use Private Link or expose via internal LoadBalancer.
 
 ./scripts/failover-testing/init-test-database.sh
 
@@ -634,7 +638,7 @@ ssh azureuser@$VM_PUBLIC_IP
 
 **Purpose**: Test pooler effectiveness for external clients.
 
-**Use Case**: Production applications with external connectivity.
+**Use Case**: Applications with external connectivity in lab environments.
 
 #### 4A: Manual Promotion via Pooler from VM
 
@@ -643,10 +647,10 @@ ssh azureuser@$VM_PUBLIC_IP
 ./scenario-4a-vm-pooler-manual.sh
 ```
 
-**Best Production Scenario:**
+**Best Lab Testing Scenario:**
 - Combines pooler resilience with realistic network
-- Most common production deployment pattern
-- Recommended for payment gateway workload
+- Common deployment pattern for testing
+- Recommended for payment gateway workload simulation
 
 #### 4B: Simulated Failure via Pooler from VM
 
@@ -658,7 +662,7 @@ ssh azureuser@$VM_PUBLIC_IP
 **Ultimate Test:**
 - Worst-case scenario (crash + external client)
 - PgBouncer's full resilience on display
-- Validates production readiness
+- Validates HA behavior and failover capabilities
 
 ---
 
@@ -946,7 +950,7 @@ kubectl get svc -n cnpg-database -o wide
 **Solutions:**
 1. Expose services via LoadBalancer for external access
 2. Use kubectl port-forward from VM
-3. Configure Private Link for production scenarios
+3. Configure Private Link for production scenarios (beyond lab scope)
 
 ---
 
@@ -954,8 +958,8 @@ kubectl get svc -n cnpg-database -o wide
 
 ### Before Testing
 
-1. ✅ **Backup Current Data**: Take snapshot of production data
-2. ✅ **Schedule Maintenance Window**: Coordinate with team
+1. ✅ **Backup Current Data**: Take snapshot of lab data
+2. ✅ **Schedule Testing Window**: Coordinate with team
 3. ✅ **Monitor Resources**: Ensure sufficient capacity
 4. ✅ **Document Baseline**: Record normal performance metrics
 5. ✅ **Prepare Rollback**: Have recovery plan ready
@@ -998,7 +1002,7 @@ kubectl get svc -n cnpg-database -o wide
 
 6. **Re-test Critical Scenarios**: Validate improvements
 
-7. **Document for Production**: Create operational runbooks
+7. **Document Results**: Create test reports and operational notes
 
 ---
 

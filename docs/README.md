@@ -2,6 +2,9 @@
 
 A comprehensive automation framework for deploying a highly available PostgreSQL database on Azure Kubernetes Service (AKS) with Premium v2 disk storage.
 
+> **⚠️ IMPORTANT: Lab and Proof-of-Concept Use Only**  
+> This code is provided strictly for **lab environments and proof-of-concept purposes only**. It is not intended for production use. Additional hardening, security reviews, compliance validation, and operational procedures are required before considering any production deployment.
+
 ## 🎯 Overview
 
 This project automates the deployment of a **3-node highly available PostgreSQL cluster** on AKS using CloudNativePG (CNPG) operator with the following features:
@@ -252,7 +255,7 @@ smartShutdownTimeout: 10                   # 10s shutdown (from 180s)
 4. **Service Update** (1-2s): Kubernetes updates service endpoints
 5. **Total Time**: **8-12 seconds** typical failover (vs 30-60s default)
 
-**Trade-off**: Faster failover increases risk of false positives during network hiccups. For production, consider increasing to 10-15s.
+**Trade-off**: Faster failover increases risk of false positives during network hiccups. For lab testing with <10s targets, these settings are appropriate. For production, consider increasing to 10-15s based on your network stability and RTO requirements.
 
 ## 📊 Monitoring
 

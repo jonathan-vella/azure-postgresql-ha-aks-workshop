@@ -1,8 +1,11 @@
 # � Azure PostgreSQL HA on AKS Workshop
 
-A complete automation framework for deploying a **highly available, production-ready PostgreSQL database** on Azure Kubernetes Service with Premium v2 storage.
+A complete automation framework for deploying a **highly available PostgreSQL database** on Azure Kubernetes Service with Premium v2 storage.
 
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](#) [![License](https://img.shields.io/badge/License-MIT-blue)](#) [![Maintained](https://img.shields.io/badge/Maintained%3F-Yes-green)](#)
+> **⚠️ IMPORTANT: Lab and Proof-of-Concept Use Only**  
+> This code is provided strictly for **lab environments and proof-of-concept purposes only**. It is not intended for production use. Additional hardening, security reviews, compliance validation, and operational procedures are required before considering any production deployment.
+
+[![Status](https://img.shields.io/badge/Status-Lab%2FPoC-yellow)](#) [![License](https://img.shields.io/badge/License-MIT-blue)](#) [![Maintained](https://img.shields.io/badge/Maintained%3F-Yes-green)](#)
 
 ---
 
@@ -163,7 +166,7 @@ kubectl get pods -n cnpg-database -l cnpg.io/cluster=pg-primary
 
 ### 4️⃣ Connect
 ```bash
-# Option 1: Connect via PgBouncer (Recommended for Production)
+# Option 1: Connect via PgBouncer (Recommended for Applications)
 kubectl port-forward svc/pg-primary-pooler-rw 5432:5432 -n cnpg-database &
 psql -h localhost -U app -d appdb
 
@@ -301,7 +304,7 @@ pg-primary-ro           # Direct read-only (no pooling)
 - Microservices architectures
 - Serverless workloads (Azure Functions, AWS Lambda)
 - Connection-heavy applications (10K+ connections)
-- Production workloads requiring connection efficiency
+- High-availability workloads requiring connection efficiency
 
 ⚠️ **Direct connections for:**
 - Long-running analytical queries
@@ -311,7 +314,7 @@ pg-primary-ro           # Direct read-only (no pooling)
 
 ### Connection Examples
 ```bash
-# Via PgBouncer (Production)
+# Via PgBouncer (Applications)
 psql "host=pg-primary-pooler-rw.cnpg-database.svc.cluster.local port=5432 dbname=appdb user=app"
 
 # Direct (Admin tasks)
@@ -656,7 +659,7 @@ export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
 **CNPG Version**: 1.27.1  
 **PostgreSQL Version**: 17.0  
 **PostgreSQL Version**: 16  
-**Status**: ✅ Production Ready
+**Status**: ✅ Lab & PoC Ready
 
 ---
 

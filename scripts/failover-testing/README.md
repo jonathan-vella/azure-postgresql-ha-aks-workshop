@@ -84,7 +84,7 @@ export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
 
 **Recommended order**: 2b → 2a → 1b → 1a
 
-**Why start with 2b?** Best production scenario (pooler + automatic failover), most resilient.
+**Why start with 2b?** Best lab testing scenario (pooler + automatic failover), most resilient.
 
 ### Azure VM Scenarios (Manual)
 
@@ -248,7 +248,7 @@ pgbench -h pg-primary-pooler-rw -U app -d appdb \
 | **Error Rate** | 5-10% | <1% | VM slightly higher |
 | **Recovery Time** | Manual reconnect | Automatic | Same for both |
 | **Latency Impact** | Large spike | Small spike | VM +2-5ms baseline |
-| **Production Ready** | ⚠️ Requires retry logic | ✅ Yes | ✅ Yes (with pooler) |
+| **Recommended For** | ⚠️ Requires retry logic | ✅ Applications | ✅ Applications (with pooler) |
 
 ## 🐛 Troubleshooting
 
@@ -327,18 +327,18 @@ kubectl exec -it <replica-pod> -n cnpg-database -- pg_isready
 
 ## 🎯 Best Practices
 
-1. **Always test PgBouncer scenarios first** - Most production-relevant
-2. **Run tests during low-traffic windows** - Minimize production impact
+1. **Always test PgBouncer scenarios first** - Most representative of application workloads
+2. **Run tests during dedicated testing windows** - Minimize impact on other lab activities
 3. **Collect baseline metrics** - Know your normal performance
 4. **Test both failover types** - Manual and simulated cover different failure modes
 5. **Document actual results** - Fill in expected results with real data
-6. **Automate regularly** - Include in CI/CD for regression testing
+6. **Automate regularly** - Include in testing workflows for consistency
 7. **Compare VM vs AKS** - Understand external client behavior
 
 ## 💡 Tips
 
 - **Parallel testing**: Run AKS scenarios while VM is initializing
-- **Increase scale factor**: Use scale 500+ for production validation
+- **Increase scale factor**: Use scale 500+ for larger dataset validation
 - **Vary TPS targets**: Test at 50%, 100%, 150% of expected load
 - **Extended duration**: Run 30-minute tests for endurance validation
 - **Multiple failovers**: Test 3+ consecutive failovers in one run

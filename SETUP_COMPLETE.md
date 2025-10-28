@@ -94,7 +94,7 @@ graph TD
     N --> N2["Verify connections"]
     N --> N3["Test backups"]
     N --> N4["Run pgbench test"]
-    N1 & N2 & N3 & N4 --> O["🎉 Production Ready!"]
+    N1 & N2 & N3 & N4 --> O["🎉 Lab Setup Complete!"]
     
     style A fill:#4CAF50,stroke:#2E7D32,color:#fff
     style M fill:#4CAF50,stroke:#2E7D32,color:#fff
@@ -263,12 +263,14 @@ psql -h localhost -p 5433 -U app -d appdb
 - Azure Monitor + Grafana monitoring
 - Container insights enabled
 
-✅ **Production Ready**
+✅ **Lab & PoC Ready**
 - SCRAM-SHA-256 authentication
 - Optimized PostgreSQL parameters for E8as_v6
 - Failover optimization (5s delays, 3s probe timeouts)
 - Automated health checks
 - CNPG 1.29.0+ compatible (zero deprecated configurations)
+
+> **Note**: This configuration is designed for lab and proof-of-concept purposes. Additional security hardening, compliance validation, and operational procedures are required for production use.
 
 ## 📊 Architecture Components
 
