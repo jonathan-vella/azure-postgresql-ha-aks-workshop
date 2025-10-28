@@ -55,7 +55,7 @@ This guide validates the PostgreSQL HA deployment for lab and proof-of-concept p
 - **Write:Read Ratio**: 80:20 (payment processing heavy)
 - **Concurrency**: 100 simultaneous client connections
 - **Dataset**: Scale 100 (~1.6 GB) for realistic testing
-- **Protocol**: 
+- **Protocol**:
   - Prepared statements for direct connections (optimal performance)
   - Simple protocol for PgBouncer (required for transaction pooling)
 
@@ -757,13 +757,13 @@ kubectl get svc -n cnpg-database -o wide
 ## Next Steps
 
 1. **Run Baseline Test**: Establish performance without failover
-   
+
    ```bash
    ./scripts/failover-testing/baseline-performance.sh
    ```
 
 2. **Start with Scenario 1A**: Simplest scenario (AKS + Direct + Manual)
-   
+
    ```bash
    ./scripts/failover-testing/scenario-1a-aks-direct-manual.sh
    ```
