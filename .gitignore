@@ -1,0 +1,78 @@
+# Azure & Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+terraform.log
+
+# Bicep
+*.bicep.json
+bicep.log
+
+# Kubernetes
+kubeconfig*
+*.kubeconfig
+.kube/
+
+# Logs & temporary files
+*.log
+*.tmp
+*.pid
+
+# IDE/Editor
+.vscode/settings.json
+.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+.kube/config
+
+# Build artifacts
+bin/
+obj/
+dist/
+build/
+
+# Dependencies
+node_modules/
+vendor/
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Credentials & Config (except examples)
+config/*.secrets.json
+!config/deployment-config.json
+
+# Temporary deployment artifacts
+*.backup
+*.tmp
+*-temp.*
+
+# Cloud shell history
+.cloudshell_history
+
+# AKS/kubectl cache
+.helm/
+.kube/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Auto-generated environment variables
+.env

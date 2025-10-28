@@ -1,0 +1,6 @@
+export AKS_UAMI_WORKLOAD_CLIENTID="0510d8da-7096-4215-baeb-95f0791ee4a4"
+export AKS_UAMI_WORKLOAD_OBJECTID="86afebff-e00a-4718-a710-c3d82c058fee"
+export STORAGE_ACCOUNT_PRIMARY_RESOURCE_ID="/subscriptions/00858ffc-dded-4f0f-8bbf-e17fff0d47d9/resourceGroups/rg-cnpg-hb2ocp9d/providers/Microsoft.Storage/storageAccounts/hacnpgpsahb2ocp9d"
+export GRAFANA_RESOURCE_ID="/subscriptions/00858ffc-dded-4f0f-8bbf-e17fff0d47d9/resourceGroups/rg-cnpg-hb2ocp9d/providers/Microsoft.Dashboard/grafana/grafana-cnpg-hb2ocp9d"
+export AMW_RESOURCE_ID="/subscriptions/00858ffc-dded-4f0f-8bbf-e17fff0d47d9/resourcegroups/rg-cnpg-hb2ocp9d/providers/microsoft.monitor/accounts/amw-cnpg-hb2ocp9d"
+export ALA_RESOURCE_ID="/subscriptions/00858ffc-dded-4f0f-8bbf-e17fff0d47d9/resourceGroups/rg-cnpg-hb2ocp9d/providers/Microsoft.OperationalInsights/workspaces/ala-cnpg-hb2ocp9d"
