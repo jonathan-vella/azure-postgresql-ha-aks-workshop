@@ -587,6 +587,57 @@ Your deployment is successful when:
 
 ---
 
+## 🧪 Failover Testing
+
+After deployment, validate high availability with comprehensive failover tests:
+
+### Quick Start
+```bash
+# Navigate to failover testing
+cd scripts/failover-testing
+
+# Set PostgreSQL password
+export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
+  -o jsonpath='{.data.password}' | base64 -d)
+
+# Run recommended scenario (PgBouncer + Simulated Failure)
+./scenario-2b-aks-pooler-simulated.sh
+```
+
+### Test Scenarios
+
+**Automated AKS Pod Scenarios** (ready to run):
+- `scenario-1a-aks-direct-manual.sh` - Direct PostgreSQL + Manual failover
+- `scenario-1b-aks-direct-simulated.sh` - Direct PostgreSQL + Simulated failure
+- `scenario-2a-aks-pooler-manual.sh` - PgBouncer + Manual failover ⭐
+- `scenario-2b-aks-pooler-simulated.sh` - PgBouncer + Simulated failure ⭐ **Recommended**
+
+**Azure VM External Client Scenarios** (requires VM setup):
+- See `docs/VM_SETUP_GUIDE.md` for Azure VM configuration
+- See `scripts/failover-testing/VM_SCENARIOS_REFERENCE.md` for external client testing
+
+### What Gets Tested
+- ✅ **RPO = 0** validation (zero data loss with synchronous replication)
+- ✅ **RTO < 10s** measurement (recovery time objective)
+- ✅ **Connection resilience** (Direct vs PgBouncer comparison)
+- ✅ **Data consistency** (pre/post-failover transaction verification)
+- ✅ **Client reconnection** (automatic vs manual)
+- ✅ **Performance impact** (TPS and latency during failover)
+
+### Expected Results
+- **Target TPS**: 4,000-8,000 sustained (payment gateway workload)
+- **Failover Duration**: <10 seconds (automatic promotion)
+- **Data Loss**: Zero (RPO=0 with synchronous replication)
+- **PgBouncer Advantage**: Transparent reconnection, <1% error rate
+- **Direct Connection**: 5-10% error rate during failover window
+
+### Documentation
+- **Complete Guide**: [docs/FAILOVER_TESTING.md](docs/FAILOVER_TESTING.md)
+- **VM Setup**: [docs/VM_SETUP_GUIDE.md](docs/VM_SETUP_GUIDE.md)
+- **Quick Reference**: [scripts/failover-testing/README.md](scripts/failover-testing/README.md)
+
+---
+
 ## 🔗 Important Links
 
 - **CloudNativePG**: https://cloudnative-pg.io/
