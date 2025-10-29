@@ -74,18 +74,18 @@ spec:
   
   primaryUpdateStrategy: unsupervised
   
-  # Failover optimization for <10s failover time (currently 30-60s)
-  # These settings reduce detection time and speed up automatic failover
-  failoverDelay: 5                               # Seconds before triggering failover (from 30s default)
-  startDelay: 5                                  # Seconds before starting instance (from 30s default)
-  stopDelay: 5                                   # Seconds before stopping instance (from 30s default)
-  switchoverDelay: 5                             # Seconds before switchover (from 40000000s default)
+  # Failover optimization for <10s failover time
+  # Aggressive settings for sub-10 second automatic failover
+  failoverDelay: 3                               # Reduced from 5s - faster failover trigger
+  startDelay: 3                                  # Reduced from 5s - faster pod startup
+  stopDelay: 3                                   # Reduced from 5s - faster pod shutdown
+  switchoverDelay: 3                             # Reduced from 5s - faster planned switchover
   
   # Faster health checks for quick failure detection
   livenessProbeTimeout: 3                        # Liveness probe timeout in seconds (from 30s)
   readinessProbeTimeout: 3                       # Readiness probe timeout in seconds (from 30s)
   
-  smartShutdownTimeout: 10                       # Fast shutdown timeout (from 180s)
+  smartShutdownTimeout: 5                        # Reduced from 10s - faster graceful shutdown
   
   postgresql:
     parameters:
@@ -131,8 +131,8 @@ spec:
       
       # Synchronous replication tuning (RPO = 0, zero data loss)
       synchronous_commit: "remote_apply"         # Strictest - ensure replicas apply changes
-      wal_receiver_timeout: "5s"                 # Fast failure detection (from 60s)
-      wal_sender_timeout: "5s"                   # Fast failure detection (from 60s)
+      wal_receiver_timeout: "3s"                 # Reduced from 5s - faster failure detection
+      wal_sender_timeout: "3s"                   # Reduced from 5s - faster failure detection
       wal_receiver_status_interval: "1s"         # Frequent status updates for fast failover
       
       # Memory and resource management
