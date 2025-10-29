@@ -326,7 +326,7 @@
             "type": "prometheus",
             "uid": "amw-cnpg-987kr2cs"
           },
-          "expr": "rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m]) + rate(cnpg_pg_stat_database_xact_rollback{pg_cluster=\"$pg_cluster\"}[1m])",
+          "expr": "sum by (pod, role) (rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m]) or rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m])*0)",
           "legendFormat": "{{pod}} ({{role}})",
           "refId": "A"
         }
@@ -533,7 +533,7 @@
         "type": "prometheus",
         "uid": "amw-cnpg-987kr2cs"
       },
-      "description": "WAL archiving status - CRITICAL for backup validation",
+      "description": "WAL archiving status - Shows count of WAL files ready to archive (0 = OK)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -543,33 +543,40 @@
             {
               "options": {
                 "0": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "FAILING"
-                },
-                "1": {
                   "color": "green",
                   "index": 0,
                   "text": "OK"
                 }
               },
               "type": "value"
+            },
+            {
+              "options": {
+                "from": 1,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILING"
+                },
+                "to": 999
+              },
+              "type": "range"
             }
           ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "green",
+                "color": "red",
                 "value": 1
               }
             ]
           },
-          "unit": "none"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -601,7 +608,7 @@
             "type": "prometheus",
             "uid": "amw-cnpg-987kr2cs"
           },
-          "expr": "cnpg_collector_pg_wal_archive_status{pg_cluster=\"$pg_cluster\"}",
+          "expr": "cnpg_collector_pg_wal_archive_status{pg_cluster=\"$pg_cluster\", value=\"ready\"}",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -705,18 +712,34 @@
         "type": "prometheus",
         "uid": "amw-cnpg-987kr2cs"
       },
-      "description": "Number of synchronous replicas required for HA",
+      "description": "Sync replicas in 'sync' state (Note: Shows 0 when using method=any/quorum mode, which is normal. Check pg_stat_replication for actual sync_state='quorum')",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "yellow",
+                  "index": 0,
+                  "text": "QUORUM MODE"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "SYNC"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "yellow",
                 "value": null
               },
               {
