@@ -326,7 +326,7 @@
             "type": "prometheus",
             "uid": "amw-cnpg-987kr2cs"
           },
-          "expr": "rate(cnpg_transactions_total{pg_cluster=\"$pg_cluster\"}[1m])",
+          "expr": "rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m]) + rate(cnpg_pg_stat_database_xact_rollback{pg_cluster=\"$pg_cluster\"}[1m])",
           "legendFormat": "{{pod}} ({{role}})",
           "refId": "A"
         }

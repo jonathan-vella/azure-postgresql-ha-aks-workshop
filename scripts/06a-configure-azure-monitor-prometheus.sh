@@ -73,45 +73,6 @@ data:
       # Keep pod IP for connection tracking
       - source_labels: [__meta_kubernetes_pod_ip]
         target_label: pod_ip
-      
-      # Metric relabeling - keep only metrics needed for load test & failover
-      metric_relabel_configs:
-      # Keep instance health
-      - source_labels: [__name__]
-        regex: 'cnpg_collector_up'
-        action: keep
-      # Keep transaction metrics for load testing
-      - source_labels: [__name__]
-        regex: 'cnpg_transactions_total'
-        action: keep
-      # Keep replication lag for failover validation
-      - source_labels: [__name__]
-        regex: 'cnpg_pg_replication_lag'
-        action: keep
-      # Keep connection metrics for load testing
-      - source_labels: [__name__]
-        regex: 'cnpg_backends_total'
-        action: keep
-      # Keep WAL metrics for backup/recovery validation
-      - source_labels: [__name__]
-        regex: 'cnpg_collector_pg_wal.*'
-        action: keep
-      # Keep sync replica metrics for HA validation
-      - source_labels: [__name__]
-        regex: 'cnpg_collector_sync_replicas'
-        action: keep
-      # Keep fencing status for failover scenarios
-      - source_labels: [__name__]
-        regex: 'cnpg_collector_fencing_on'
-        action: keep
-      # Keep switchover required flag
-      - source_labels: [__name__]
-        regex: 'cnpg_collector_manual_switchover_required'
-        action: keep
-      # Keep database size for monitoring
-      - source_labels: [__name__]
-        regex: 'cnpg_pg_database_size_bytes'
-        action: keep
 EOF
 
 echo ""
