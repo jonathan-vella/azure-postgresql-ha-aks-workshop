@@ -15,14 +15,15 @@ azure-postgresql-ha-aks-workshop/
 ├── config/
 │   └── environment-variables.sh       # Environment configuration (loaded by scripts)
 ├── scripts/
-│   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity)
+│   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
 │   ├── 03-configure-workload-identity.sh # Federated credentials setup
 │   ├── 04-deploy-cnpg-operator.sh     # Installs CNPG operator via Helm
 │   ├── 04a-install-barman-cloud-plugin.sh # Installs Barman Cloud Plugin v0.8.0
-│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer
+│   ├── 04b-install-prometheus-operator.sh # Installs Prometheus Operator for metrics
+│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer + PodMonitor
 │   ├── 06-configure-monitoring.sh     # Configures Azure Monitor + Grafana
-│   ├── 07-test-pgbench.sh             # Tests pgbench (direct + pooler connections)
-│   ├── deploy-all.sh                  # ⭐ Master orchestration script (runs steps 02-06 + 04a)
+│   ├── 07-display-connection-info.sh  # Displays connection endpoints and credentials
+│   ├── deploy-all.sh                  # ⭐ Master orchestration script (8 steps: 2, 3, 4, 4a, 4b, 5, 6, 7)
 │   └── setup-prerequisites.sh         # Installs required tools
 ├── kubernetes/
 │   ├── postgresql-cluster.yaml        # Reference manifest (not directly used)
@@ -37,11 +38,12 @@ azure-postgresql-ha-aks-workshop/
 ### Key Files Explained:
 - **`.env`**: Auto-generated on devcontainer startup with unique resource names
 - **`config/environment-variables.sh`**: Template loaded by deployment scripts
-- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 7 deployment steps
-- **Scripts 02-06 + 04a**: Individual deployment phases using Azure CLI and Helm
+- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 8 deployment steps
+- **Scripts 02-07**: Individual deployment phases using Azure CLI and Helm
 - **Script 04a**: Installs Barman Cloud Plugin v0.8.0 (required for backup/restore operations)
-- **Script 05**: Deploys PostgreSQL cluster and configures it to use the Barman Cloud Plugin
-- **Script 07**: Tests both direct PostgreSQL and PgBouncer pooler connections
+- **Script 04b**: Installs Prometheus Operator (provides PodMonitor CRD for metrics collection)
+- **Script 05**: Deploys PostgreSQL cluster and configures it to use the Barman Cloud Plugin + PodMonitor
+- **Script 07**: Displays connection information (direct PostgreSQL and PgBouncer pooler endpoints)
 
 ## 🔄 Deployment Flow
 

@@ -203,13 +203,15 @@ config/
 ### 🚀 Deployment Scripts
 ```
 scripts/
-├── 02-create-infrastructure.sh         - Creates Azure resources (RG, AKS, Storage, Identity)
+├── 02-create-infrastructure.sh         - Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
 ├── 03-configure-workload-identity.sh   - Sets up federated credentials
-├── 04-deploy-cnpg-operator.sh          - Installs CloudNativePG via Helm
-├── 05-deploy-postgresql-cluster.sh     - Deploys PostgreSQL cluster + services
+├── 04-deploy-cnpg-operator.sh          - Installs CloudNativePG operator via Helm
+├── 04a-install-barman-cloud-plugin.sh  - Installs Barman Cloud Plugin for backup/restore
+├── 04b-install-prometheus-operator.sh  - Installs Prometheus Operator for metrics collection
+├── 05-deploy-postgresql-cluster.sh     - Deploys PostgreSQL cluster + PgBouncer pooler + PodMonitor
 ├── 06-configure-monitoring.sh          - Configures Grafana + Azure Monitor
-├── 07-test-pgbench.sh                  - Verifies pgbench functionality in cluster
-└── deploy-all.sh                       - Master orchestration script
+├── 07-display-connection-info.sh       - Displays connection endpoints and credentials
+└── deploy-all.sh                       - Master orchestration script (8 steps)
 ```
 
 ### ⚙️ Kubernetes Reference

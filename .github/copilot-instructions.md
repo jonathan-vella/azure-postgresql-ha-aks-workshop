@@ -23,9 +23,11 @@ This project automates the deployment of a highly available PostgreSQL database 
 │   ├── 02-create-infrastructure.sh         # Creates Azure resources
 │   ├── 03-configure-workload-identity.sh   # Federated credentials
 │   ├── 04-deploy-cnpg-operator.sh          # Installs CNPG operator
+│   ├── 04a-install-barman-cloud-plugin.sh  # Installs Barman plugin for backups
+│   ├── 04b-install-prometheus-operator.sh  # Installs Prometheus for metrics
 │   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA
 │   ├── 06-configure-monitoring.sh          # Configures observability
-│   ├── 07-test-pgbench.sh                  # Tests pgbench performance tool
+│   ├── 07-display-connection-info.sh       # Shows connection endpoints
 │   └── deploy-all.sh                       # Master orchestration
 ├── kubernetes/              # Kubernetes manifests
 │   └── postgresql-cluster.yaml  # Reference manifest (not used in deployment)
@@ -44,13 +46,15 @@ This project automates the deployment of a highly available PostgreSQL database 
 - Auto-detects public IP for AKS API access
 
 ### Deployment Scripts (Azure CLI)
-- **02-create-infrastructure**: Creates RG, Storage, Identity, AKS, Monitoring
+- **02-create-infrastructure**: Creates RG, Storage, Identity, AKS, Monitoring, Bastion, NAT Gateway
 - **03-configure-workload-identity**: Sets up federated credentials for backup access
 - **04-deploy-cnpg-operator**: Installs CloudNativePG via Helm
-- **05-deploy-postgresql-cluster**: Deploys PostgreSQL HA cluster with Premium v2 storage
+- **04a-install-barman-cloud-plugin**: Installs Barman Cloud Plugin v0.8.0
+- **04b-install-prometheus-operator**: Installs Prometheus Operator for PodMonitor support
+- **05-deploy-postgresql-cluster**: Deploys PostgreSQL HA cluster with Premium v2 storage + PgBouncer + PodMonitor
 - **06-configure-monitoring**: Configures Grafana + Azure Monitor integration
-- **07-test-pgbench**: Verifies pgbench performance testing capability in cluster
-- **deploy-all**: Master orchestration script (runs all steps sequentially)
+- **07-display-connection-info**: Shows connection endpoints and credentials
+- **deploy-all**: Master orchestration script (8 steps: 2, 3, 4, 4a, 4b, 5, 6, 7)
 - Bash scripts only (DevContainer runs on Linux)
 
 ### Kubernetes Manifests (`kubernetes/postgresql-cluster.yaml`)
