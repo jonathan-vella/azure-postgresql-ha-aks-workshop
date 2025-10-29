@@ -1,0 +1,832 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "amw-cnpg-987kr2cs"
+        },
+        "enable": true,
+        "expr": "changes(cnpg_collector_up{pg_cluster=\"$pg_cluster\", role=\"primary\"}[1m]) > 0",
+        "iconColor": "red",
+        "name": "Primary Switchover",
+        "tagKeys": "pod",
+        "textFormat": "Primary changed to {{pod}}",
+        "titleFormat": "Failover Event"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Current status of all PostgreSQL instances in the cluster",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_collector_up{pg_cluster=\"$pg_cluster\"}",
+          "legendFormat": "{{pod}} ({{role}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Instance Health Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Which pod is currently serving as the primary instance",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 16,
+          "valueSize": 24
+        },
+        "textMode": "name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_collector_up{pg_cluster=\"$pg_cluster\", role=\"primary\"}",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Primary Instance",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Number of instances currently healthy",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "green",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 16,
+          "valueSize": 32
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "count(cnpg_collector_up{pg_cluster=\"$pg_cluster\"} == 1)",
+          "legendFormat": "Healthy Instances",
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster Availability",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Transaction rate (commits + rollbacks) per second - KEY LOAD TEST METRIC",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Transactions/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "rate(cnpg_transactions_total{pg_cluster=\"$pg_cluster\"}[1m])",
+          "legendFormat": "{{pod}} ({{role}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Transaction Rate (TPS) - Load Test",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Replication lag in seconds for each replica - KEY FAILOVER METRIC",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Lag (seconds)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_pg_replication_lag{pg_cluster=\"$pg_cluster\", role=\"replica\"}",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Replication Lag - Failover Monitoring",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Active database connections by instance - KEY LOAD TEST METRIC",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Connections",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_backends_total{pg_cluster=\"$pg_cluster\"}",
+          "legendFormat": "{{pod}} ({{role}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Connections - Load Test",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "WAL archiving status - CRITICAL for backup validation",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILING"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_collector_pg_wal_archive_status{pg_cluster=\"$pg_cluster\"}",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "WAL Archive Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Database size growth over time",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Size",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_pg_database_size_bytes{pg_cluster=\"$pg_cluster\"}",
+          "legendFormat": "{{datname}} on {{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Database Size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "amw-cnpg-987kr2cs"
+      },
+      "description": "Number of synchronous replicas required for HA",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 16,
+          "valueSize": 32
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "amw-cnpg-987kr2cs"
+          },
+          "expr": "cnpg_collector_sync_replicas{pg_cluster=\"$pg_cluster\", role=\"primary\"}",
+          "legendFormat": "Sync Replicas",
+          "refId": "A"
+        }
+      ],
+      "title": "Synchronous Replicas",
+      "type": "stat"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "postgresql",
+    "cnpg",
+    "ha",
+    "load-test",
+    "failover"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "pg-primary-cnpg-987kr2cs",
+          "value": "pg-primary-cnpg-987kr2cs"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "amw-cnpg-987kr2cs"
+        },
+        "definition": "label_values(cnpg_collector_up, pg_cluster)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "PostgreSQL Cluster",
+        "multi": false,
+        "name": "pg_cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(cnpg_collector_up, pg_cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "CloudNativePG - Load Testing & Failover Dashboard",
+  "uid": "cnpg-ha-loadtest",
+  "version": 1,
+  "weekStart": ""
+}
