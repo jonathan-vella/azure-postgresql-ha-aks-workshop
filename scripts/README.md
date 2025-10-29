@@ -455,8 +455,8 @@ kubectl logs -n cnpg-database <pod-name> | grep -i backup
 ## 🔗 External Documentation
 
 - CloudNativePG: https://cloudnative-pg.io/
-- Azure AKS: https://learn.microsoft.com/azure/aks/
-- Premium SSD v2: https://learn.microsoft.com/azure/virtual-machines/disks-types
+- Azure AKS: https://learn.microsoft.com/en-us/azure/aks/
+- Premium SSD v2: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types
 
 ---
 

@@ -294,8 +294,8 @@ az group delete --resource-group <rg-name>
 ## 📚 Resources
 
 - **CloudNativePG**: https://cloudnative-pg.io/documentation/
-- **AKS Docs**: https://learn.microsoft.com/azure/aks/
-- **Premium v2**: https://learn.microsoft.com/azure/virtual-machines/disks-types
+- **AKS Docs**: https://learn.microsoft.com/en-us/azure/aks/
+- **Premium v2**: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types
 - **This Project**: See `docs/README.md`
 
 ---
