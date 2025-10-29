@@ -103,7 +103,7 @@ Create an Ubuntu VM in the VM subnet for external testing:
 source .env  # or source config/environment-variables.sh
 source .deployment-outputs
 
-# Create Ubuntu 24.04 VM in the dedicated VM subnet
+# Create Ubuntu 24.04 VM in the dedicated VM subnet (NO public IP - using Bastion)
 VM_NAME="${AKS_PRIMARY_CLUSTER_NAME}-test-vm"
 VM_SIZE="Standard_D4s_v5"  # 4 vCPU, 16 GB RAM
 
@@ -117,20 +117,11 @@ az vm create \
   --subnet "$VM_SUBNET_NAME" \
   --admin-username azureuser \
   --generate-ssh-keys \
-  --public-ip-sku Standard \
-  --nsg-rule SSH \
+  --public-ip-address "" \
+  --nsg-rule NONE \
   --output table
 
-# Get VM public IP
-VM_PUBLIC_IP=$(az vm show -d \
-  --resource-group "$RESOURCE_GROUP_NAME" \
-  --name "$VM_NAME" \
-  --query publicIps \
-  --output tsv)
-
-echo "VM Public IP: $VM_PUBLIC_IP"
-
-# Get VM private IP (for internal connectivity)
+# Get VM private IP (internal connectivity)
 VM_PRIVATE_IP=$(az vm show -d \
   --resource-group "$RESOURCE_GROUP_NAME" \
   --name "$VM_NAME" \
@@ -142,16 +133,35 @@ echo "VM Private IP: $VM_PRIVATE_IP"
 # Save VM details
 cat >> .deployment-outputs << EOF
 export VM_NAME="$VM_NAME"
-export VM_PUBLIC_IP="$VM_PUBLIC_IP"
 export VM_PRIVATE_IP="$VM_PRIVATE_IP"
+export BASTION_NAME="$BASTION_NAME"
 EOF
 ```
 
 ### 3. Install PostgreSQL Client Tools on VM
 
+**Connect to VM via Azure Bastion:**
+
 ```bash
-# SSH to the VM
-ssh azureuser@$VM_PUBLIC_IP
+# SSH to the VM via Bastion (uses Azure CLI authentication)
+az network bastion ssh \
+  --name "$BASTION_NAME" \
+  --resource-group "$RESOURCE_GROUP_NAME" \
+  --target-resource-id $(az vm show -g "$RESOURCE_GROUP_NAME" -n "$VM_NAME" --query id -o tsv) \
+  --auth-type AAD
+```
+
+**Or using SSH key:**
+
+```bash
+# SSH with key
+az network bastion ssh \
+  --name "$BASTION_NAME" \
+  --resource-group "$RESOURCE_GROUP_NAME" \
+  --target-resource-id $(az vm show -g "$RESOURCE_GROUP_NAME" -n "$VM_NAME" --query id -o tsv) \
+  --auth-type ssh-key \
+  --username azureuser \
+  --ssh-key ~/.ssh/id_rsa
 
 # Install PostgreSQL 17 client and tools
 sudo apt update
@@ -186,6 +196,18 @@ exit
 ---
 
 ## Test Environment Setup
+
+> **🔒 VM Connectivity Note**: All test VMs use Azure Bastion for secure access (no public IPs).
+> 
+> **Quick SSH command:**
+> ```bash
+> # Connect to test VM via Bastion
+> az network bastion ssh \
+>   --name "$BASTION_NAME" \
+>   --resource-group "$RESOURCE_GROUP_NAME" \
+>   --target-resource-id $(az vm show -g "$RESOURCE_GROUP_NAME" -n "$VM_NAME" --query id -o tsv) \
+>   --auth-type AAD
+> ```
 
 ### 1. Initialize Test Database
 

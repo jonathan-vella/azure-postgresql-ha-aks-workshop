@@ -137,10 +137,85 @@ VM_SUBNET_ID=$(az network vnet subnet create \
     --query "id" \
     --output tsv)
 
+# Create Azure Bastion subnet (/26 required, 64 IPs)
+echo "Creating Azure Bastion subnet..."
+BASTION_SUBNET_NAME="AzureBastionSubnet"
+BASTION_SUBNET_ID=$(az network vnet subnet create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --vnet-name "$VNET_NAME" \
+    --name "$BASTION_SUBNET_NAME" \
+    --address-prefixes 10.225.1.0/26 \
+    --query "id" \
+    --output tsv)
+
 echo "✓ Virtual Network created:"
 echo "  VNet: $VNET_NAME (10.224.0.0/12)"
 echo "  AKS Subnet: $AKS_SUBNET_NAME (10.224.0.0/16)"
 echo "  VM Subnet: $VM_SUBNET_NAME (10.225.0.0/27)"
+echo "  Bastion Subnet: $BASTION_SUBNET_NAME (10.225.1.0/26)"
+
+# Create NAT Gateway for VM subnet outbound connectivity
+echo "Creating NAT Gateway for VM subnet..."
+NAT_GATEWAY_NAME="${AKS_PRIMARY_CLUSTER_NAME}-nat-gateway"
+NAT_PUBLIC_IP_NAME="${AKS_PRIMARY_CLUSTER_NAME}-nat-pip"
+
+# Create public IP for NAT Gateway
+az network public-ip create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$NAT_PUBLIC_IP_NAME" \
+    --location "$PRIMARY_CLUSTER_REGION" \
+    --sku Standard \
+    --allocation-method Static \
+    --query "publicIp.provisioningState" \
+    --output tsv
+
+# Create NAT Gateway
+az network nat gateway create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$NAT_GATEWAY_NAME" \
+    --location "$PRIMARY_CLUSTER_REGION" \
+    --public-ip-addresses "$NAT_PUBLIC_IP_NAME" \
+    --idle-timeout 10 \
+    --query "provisioningState" \
+    --output tsv
+
+# Associate NAT Gateway with VM subnet
+echo "Associating NAT Gateway with VM subnet..."
+az network vnet subnet update \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --vnet-name "$VNET_NAME" \
+    --name "$VM_SUBNET_NAME" \
+    --nat-gateway "$NAT_GATEWAY_NAME" \
+    --output none
+
+echo "✓ NAT Gateway created and associated with VM subnet"
+
+# Create public IP for Azure Bastion
+echo "Creating Azure Bastion public IP..."
+BASTION_PUBLIC_IP_NAME="${AKS_PRIMARY_CLUSTER_NAME}-bastion-pip"
+az network public-ip create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$BASTION_PUBLIC_IP_NAME" \
+    --location "$PRIMARY_CLUSTER_REGION" \
+    --sku Standard \
+    --allocation-method Static \
+    --query "publicIp.provisioningState" \
+    --output tsv
+
+# Create Azure Bastion (Standard SKU with --no-wait for parallel deployment)
+echo "Creating Azure Bastion (Standard SKU, ~10 minutes, running in background)..."
+BASTION_NAME="${AKS_PRIMARY_CLUSTER_NAME}-bastion"
+az network bastion create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$BASTION_NAME" \
+    --location "$PRIMARY_CLUSTER_REGION" \
+    --vnet-name "$VNET_NAME" \
+    --public-ip-address "$BASTION_PUBLIC_IP_NAME" \
+    --sku Standard \
+    --enable-tunneling true \
+    --no-wait
+
+echo "✓ Azure Bastion deployment initiated (will complete in background)"
 
 # Create AKS cluster
 echo "Creating AKS cluster: $AKS_PRIMARY_CLUSTER_NAME (this may take 10-15 minutes)"
@@ -262,6 +337,8 @@ export AKS_SUBNET_NAME="$AKS_SUBNET_NAME"
 export AKS_SUBNET_ID="$AKS_SUBNET_ID"
 export VM_SUBNET_NAME="$VM_SUBNET_NAME"
 export VM_SUBNET_ID="$VM_SUBNET_ID"
+export BASTION_NAME="$BASTION_NAME"
+export NAT_GATEWAY_NAME="$NAT_GATEWAY_NAME"
 EOF
 
 echo "✓ Infrastructure creation complete!"
@@ -269,5 +346,9 @@ echo "Outputs saved to: $OUTPUT_FILE"
 echo ""
 echo "Network Configuration:"
 echo "  VNet: $VNET_NAME (10.224.0.0/12)"
-echo "  AKS Subnet: $AKS_SUBNET_NAME ($AKS_SUBNET_ID)"
-echo "  VM Subnet: $VM_SUBNET_NAME ($VM_SUBNET_ID)"
+echo "  AKS Subnet: $AKS_SUBNET_NAME (10.224.0.0/16)"
+echo "  VM Subnet: $VM_SUBNET_NAME (10.225.0.0/27, NAT Gateway: $NAT_GATEWAY_NAME)"
+echo "  Bastion Subnet: AzureBastionSubnet (10.225.1.0/26, Bastion: $BASTION_NAME)"
+echo ""
+echo "⏳ Note: Azure Bastion is deploying in background (~10 minutes)"
+echo "   Check status: az network bastion show -g $RESOURCE_GROUP_NAME -n $BASTION_NAME --query provisioningState"
