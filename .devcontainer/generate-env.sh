@@ -66,9 +66,9 @@ export POSTGRES_STORAGE_CLASS="managed-csi-premium-v2"
 export STORAGECLASS_NAME="managed-csi-premium-v2"
 
 # Storage configuration (Premium SSD v2)
-export DISK_IOPS="\${DISK_IOPS:-4000}"
-export DISK_THROUGHPUT="\${DISK_THROUGHPUT:-250}"
-export PG_STORAGE_SIZE="\${PG_STORAGE_SIZE:-32Gi}"
+export DISK_IOPS="\${DISK_IOPS:-40000}"
+export DISK_THROUGHPUT="\${DISK_THROUGHPUT:-1250}"
+export PG_STORAGE_SIZE="\${PG_STORAGE_SIZE:-200Gi}"
 
 # PostgreSQL database configuration
 export PG_DATABASE_NAME="\${PG_DATABASE_NAME:-appdb}"
@@ -76,8 +76,8 @@ export PG_DATABASE_USER="\${PG_DATABASE_USER:-app}"
 export PG_DATABASE_PASSWORD="\${PG_DATABASE_PASSWORD:-SecurePassword123!}"
 
 # PostgreSQL resource allocation
-export PG_MEMORY="\${PG_MEMORY:-8Gi}"
-export PG_CPU="\${PG_CPU:-2}"
+export PG_MEMORY="\${PG_MEMORY:-48Gi}"
+export PG_CPU="\${PG_CPU:-6}"
 
 # CloudNativePG operator version
 export CNPG_VERSION="\${CNPG_VERSION:-0.22.1}"
