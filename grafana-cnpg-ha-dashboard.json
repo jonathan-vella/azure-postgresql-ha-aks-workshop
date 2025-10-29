@@ -246,7 +246,7 @@
         "type": "prometheus",
         "uid": "amw-cnpg-987kr2cs"
       },
-      "description": "Transaction rate (commits + rollbacks) per second - KEY LOAD TEST METRIC",
+      "description": "Transaction rate (commits + rollbacks) per second. Uses $__rate_interval for adaptive time window: zoomed view (5m) = 15s rate, wider view (1h+) = 1m+ rate. Better spike detection during load tests.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -326,7 +326,7 @@
             "type": "prometheus",
             "uid": "amw-cnpg-987kr2cs"
           },
-          "expr": "sum by (pod, role) (rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m]) or rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[1m])*0)",
+          "expr": "sum by (pod, role) (rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[$__rate_interval]) or rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[$__rate_interval])*0)",
           "legendFormat": "{{pod}} ({{role}})",
           "refId": "A"
         }
