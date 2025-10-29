@@ -8,13 +8,14 @@ Your **Azure PostgreSQL HA on AKS Workshop** repository is **100% complete** and
 
 ## 📦 Deliverables (15 Files)
 
-### Documentation (6 files)
-- ✅ **INDEX.md** - Main GitHub README with Mermaid architecture diagram
-- ✅ **SETUP_COMPLETE.md** - Complete setup guide with 10 steps
-- ✅ **QUICK_REFERENCE.md** - Command reference cheat sheet
-- ✅ **GITHUB_READY.md** - Publication summary and next steps
+### Documentation (7 files)
+- ✅ **README.md** - Main GitHub README with project overview
+- ✅ **docs/SETUP_COMPLETE.md** - Complete setup guide with 10 steps
+- ✅ **docs/QUICK_REFERENCE.md** - Command reference cheat sheet
+- ✅ **docs/COST_ESTIMATION.md** - Hourly/monthly cost breakdown
 - ✅ **CONTRIBUTING.md** - Contribution guidelines for community
-- ✅ **docs/README.md** - Comprehensive technical documentation (400+ lines)
+- ✅ **docs/README.md** - Comprehensive technical documentation
+- ✅ **docs/PRE_DEPLOYMENT_CHECKLIST.md** - Pre-deployment validation
 
 ### Infrastructure Code (3 files)
 - ✅ **bicep/main.bicep** - Complete AKS cluster infrastructure
@@ -208,9 +209,10 @@ This project demonstrates:
 ## 📞 Support
 
 All documentation and troubleshooting guides are included:
-- **SETUP_COMPLETE.md** - Step-by-step deployment
+- **docs/SETUP_COMPLETE.md** - Step-by-step deployment
 - **docs/README.md** - Comprehensive technical guide
-- **QUICK_REFERENCE.md** - Command reference
+- **docs/QUICK_REFERENCE.md** - Command reference
+- **docs/COST_ESTIMATION.md** - Budget planning
 - **CONTRIBUTING.md** - Development guidelines
 
 ---

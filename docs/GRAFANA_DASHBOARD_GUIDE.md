@@ -74,7 +74,7 @@ This custom dashboard is specifically designed for monitoring CloudNativePG Post
 
 ```bash
 # The dashboard JSON is located at:
-cat /workspaces/azure-postgresql-ha-aks-workshop/grafana-cnpg-ha-dashboard.json
+cat /workspaces/azure-postgresql-ha-aks-workshop/grafana/grafana-cnpg-ha-dashboard.json
 ```
 
 ### Step 2: Open Azure Managed Grafana

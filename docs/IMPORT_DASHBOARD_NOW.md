@@ -40,7 +40,7 @@ Click the link above or paste into browser → Azure AD authentication
 1. In Grafana, click **"+"** (Create menu) → **"Import"**
 2. **Option A - Upload File:**
    - Click "Upload JSON file"
-   - Select: `/workspaces/azure-postgresql-ha-aks-workshop/grafana-cnpg-ha-dashboard.json`
+   - Select: `/workspaces/azure-postgresql-ha-aks-workshop/grafana/grafana-cnpg-ha-dashboard.json`
    
    **Option B - Copy/Paste:**
    - Copy the JSON from above terminal output (the entire JSON object)
@@ -185,7 +185,7 @@ All documentation is located in `/workspaces/azure-postgresql-ha-aks-workshop/`:
 
 - **AZURE_MONITORING_SETUP.md** (this file) - Quick setup guide
 - **GRAFANA_DASHBOARD_GUIDE.md** - Detailed usage guide, metric reference, testing procedures
-- **grafana-cnpg-ha-dashboard.json** - Dashboard JSON for import
+- **grafana/grafana-cnpg-ha-dashboard.json** - Dashboard JSON for import
 - **scripts/06a-configure-azure-monitor-prometheus.sh** - Azure Monitor configuration script
 
 ## 🎯 Success Criteria Checklist

@@ -27,7 +27,7 @@ git checkout -b feature/your-feature-name
 
 # Review documentation
 cat docs/README.md
-cat SETUP_COMPLETE.md
+cat docs/SETUP_COMPLETE.md
 ```
 
 ## How to Contribute

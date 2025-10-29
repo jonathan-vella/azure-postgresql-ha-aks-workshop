@@ -185,8 +185,9 @@ psql -h localhost -U app -d appdb
 
 ### 📋 Getting Started Documents
 ```
-SETUP_COMPLETE.md          👈 START HERE - Complete setup guide
-QUICK_REFERENCE.md         👈 Quick commands cheat sheet
+docs/SETUP_COMPLETE.md          👈 START HERE - Complete setup guide
+docs/QUICK_REFERENCE.md         👈 Quick commands cheat sheet
+docs/COST_ESTIMATION.md         👈 Hourly/monthly cost breakdown
 ```
 
 ### ⚙️ Configuration
@@ -225,13 +226,16 @@ kubernetes/
 ### 📚 Documentation
 ```
 docs/
-└── README.md               - Comprehensive full documentation
-    - Prerequisites
-    - Quick start
-    - Configuration guide
-    - Monitoring setup
-    - Backup procedures
-    - Troubleshooting
+├── README.md                    - Comprehensive full documentation
+├── SETUP_COMPLETE.md            - Getting started guide
+├── QUICK_REFERENCE.md           - Command cheat sheet
+├── COST_ESTIMATION.md           - Hourly/monthly costs
+├── PRE_DEPLOYMENT_CHECKLIST.md  - Pre-deployment validation
+├── AZURE_MONITORING_SETUP.md    - Monitoring configuration
+├── GRAFANA_DASHBOARD_GUIDE.md   - Dashboard usage guide
+├── IMPORT_DASHBOARD_NOW.md      - Dashboard import instructions
+├── FAILOVER_TESTING.md          - Failover test procedures
+└── VM_SETUP_GUIDE.md            - Load test VM setup
 
 .github/
 └── copilot-instructions.md - AI assistant guidance
@@ -245,9 +249,10 @@ docs/
 ## 🎓 How to Use This Project
 
 ### Phase 1: Understanding (10 mins)
-1. Read `SETUP_COMPLETE.md` - Overview and prerequisites
-2. Review `QUICK_REFERENCE.md` - Command reference
-3. Skim `docs/README.md` - Full capabilities
+1. Read `docs/SETUP_COMPLETE.md` - Overview and prerequisites
+2. Review `docs/QUICK_REFERENCE.md` - Command reference
+3. Check `docs/COST_ESTIMATION.md` - Budget planning
+4. Skim `docs/README.md` - Full capabilities
 
 ### Phase 2: Preparation (15 mins)
 1. Verify prerequisites installed (az, kubectl, helm, jq)
@@ -551,7 +556,7 @@ See `docs/README.md` for detailed troubleshooting.
 ## 📚 Learning Path
 
 1. **Understand the basics**
-   - Read: SETUP_COMPLETE.md
+   - Read: docs/SETUP_COMPLETE.md
    - Review: docs/README.md
 
 2. **Explore configuration**
@@ -665,4 +670,4 @@ export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
 
 ---
 
-**Ready to deploy?** Start with `SETUP_COMPLETE.md` 🚀
+**Ready to deploy?** Start with `docs/SETUP_COMPLETE.md` 🚀

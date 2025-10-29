@@ -37,7 +37,7 @@
 
 ```bash
 # Display the dashboard JSON
-cat /workspaces/azure-postgresql-ha-aks-workshop/grafana-cnpg-ha-dashboard.json
+cat /workspaces/azure-postgresql-ha-aks-workshop/grafana/grafana-cnpg-ha-dashboard.json
 ```
 
 ### Step 2: Access Azure Managed Grafana
@@ -56,7 +56,7 @@ az grafana show \
 
 1. Open Grafana URL in browser (Azure AD authentication)
 2. Click **"+"** (Create) → **"Import"**
-3. **Option A**: Upload `grafana-cnpg-ha-dashboard.json`
+3. **Option A**: Upload `grafana/grafana-cnpg-ha-dashboard.json`
    - Click "Upload JSON file"
    - Select the file from `/workspaces/azure-postgresql-ha-aks-workshop/`
    
@@ -206,7 +206,7 @@ sleep 300  # Wait 5 minutes
 
 - **GRAFANA_DASHBOARD_GUIDE.md** - Detailed dashboard usage, metric reference, testing procedures
 - **scripts/06a-configure-azure-monitor-prometheus.sh** - Azure Monitor configuration script
-- **grafana-cnpg-ha-dashboard.json** - Dashboard JSON for import
+- **grafana/grafana-cnpg-ha-dashboard.json** - Dashboard JSON for import
 
 ## 🎯 Success Criteria
 
