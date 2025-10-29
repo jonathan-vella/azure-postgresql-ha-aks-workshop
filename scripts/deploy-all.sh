@@ -35,8 +35,16 @@ command -v kubectl >/dev/null 2>&1 || { echo -e "${RED}✗ kubectl not found${NC
 command -v helm >/dev/null 2>&1 || { echo -e "${RED}✗ Helm not found${NC}"; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo -e "${RED}✗ jq not found${NC}"; exit 1; }
 
-# Check Azure CLI login
-az account show >/dev/null 2>&1 || { echo -e "${RED}✗ Not logged in to Azure CLI. Run 'az login'${NC}"; exit 1; }
+# Check Azure CLI login and prompt if needed
+if ! az account show >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠ Not logged in to Azure CLI${NC}"
+    echo "Please login to Azure..."
+    az login
+    if ! az account show >/dev/null 2>&1; then
+        echo -e "${RED}✗ Azure login failed${NC}"
+        exit 1
+    fi
+fi
 echo -e "${GREEN}✓ All prerequisites validated${NC}"
 echo ""
 
