@@ -75,9 +75,11 @@ export PG_DATABASE_NAME="\${PG_DATABASE_NAME:-appdb}"
 export PG_DATABASE_USER="\${PG_DATABASE_USER:-app}"
 export PG_DATABASE_PASSWORD="\${PG_DATABASE_PASSWORD:-SecurePassword123!}"
 
-# PostgreSQL resource allocation
-export PG_MEMORY="\${PG_MEMORY:-48Gi}"
-export PG_CPU="\${PG_CPU:-6}"
+# PostgreSQL resource allocation (Safe for Standard_E8as_v6 with 20% AKS overhead)
+# Node capacity: 8 vCPU, 64GB - 20% AKS = 6.4 vCPU, 51.2GB available
+# Per node: 1 PostgreSQL pod + 1 PgBouncer pod + system pods
+export PG_MEMORY="\${PG_MEMORY:-40Gi}"  # Leaves 11GB for PgBouncer (2GB) + system (9GB)
+export PG_CPU="\${PG_CPU:-4}"           # Leaves 2.4 vCPU for PgBouncer (1) + system (1.4)
 
 # CloudNativePG operator version
 export CNPG_VERSION="\${CNPG_VERSION:-0.22.1}"

@@ -56,6 +56,33 @@ spec:
   retentionPolicy: "7d"
 EOF
 
+# Calculate PostgreSQL memory parameters dynamically based on PG_MEMORY
+echo "Calculating PostgreSQL memory parameters from PG_MEMORY=${PG_MEMORY}..."
+
+# Extract numeric value from PG_MEMORY (e.g., "48Gi" -> 48)
+PG_MEMORY_VALUE=$(echo "${PG_MEMORY}" | sed 's/[^0-9]*//g')
+
+# Calculate shared_buffers (25% of total RAM)
+SHARED_BUFFERS=$((PG_MEMORY_VALUE / 4))
+
+# Calculate effective_cache_size (75% of total RAM)
+EFFECTIVE_CACHE_SIZE=$((PG_MEMORY_VALUE * 3 / 4))
+
+# Calculate maintenance_work_mem (3% of total RAM, max 2GB)
+MAINTENANCE_WORK_MEM=$((PG_MEMORY_VALUE * 3 / 100))
+if [ $MAINTENANCE_WORK_MEM -gt 2 ]; then
+    MAINTENANCE_WORK_MEM=2
+fi
+
+# Calculate work_mem (shared_buffers / max_connections / 1.5)
+# With max_connections=500, work_mem = shared_buffers * 1024MB / 500 / 1.5
+WORK_MEM=$((SHARED_BUFFERS * 1024 / 500 * 2 / 3))
+
+echo "  Shared Buffers:        ${SHARED_BUFFERS}GB (25% of ${PG_MEMORY})"
+echo "  Effective Cache Size:  ${EFFECTIVE_CACHE_SIZE}GB (75% of ${PG_MEMORY})"
+echo "  Maintenance Work Mem:  ${MAINTENANCE_WORK_MEM}GB (3% of ${PG_MEMORY})"
+echo "  Work Mem:              ${WORK_MEM}MB"
+
 # Create PostgreSQL cluster manifest
 echo "Creating PostgreSQL cluster: $PG_PRIMARY_CLUSTER_NAME"
 kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
@@ -89,12 +116,12 @@ spec:
   
   postgresql:
     parameters:
-      # Connection and memory settings (tuned for Standard_E8as_v6: 8 vCPU, 64 GiB RAM)
+      # Connection and memory settings (dynamically calculated from PG_MEMORY)
       max_connections: "500"
-      shared_buffers: "16GB"                     # 25% of 64 GiB RAM (optimal for PostgreSQL)
-      effective_cache_size: "48GB"               # 75% of 64 GiB RAM
-      work_mem: "64MB"                           # 48GB / 500 connections / 1.5
-      maintenance_work_mem: "2GB"                # 3% of RAM for maintenance operations
+      shared_buffers: "${SHARED_BUFFERS}GB"          # 25% of PG_MEMORY (auto-calculated)
+      effective_cache_size: "${EFFECTIVE_CACHE_SIZE}GB"  # 75% of PG_MEMORY (auto-calculated)
+      work_mem: "${WORK_MEM}MB"                      # shared_buffers / max_connections / 1.5 (auto-calculated)
+      maintenance_work_mem: "${MAINTENANCE_WORK_MEM}GB"  # 3% of PG_MEMORY, max 2GB (auto-calculated)
       
       # WAL (Write-Ahead Log) optimization for high throughput (40K IOPS disk)
       wal_buffers: "64MB"                        # -1 = auto-tune to 3% of shared_buffers
