@@ -34,7 +34,7 @@ code config/environment-variables.sh
 # 'source' executes the script in the current shell context
 source config/environment-variables.sh
 
-# Deploy all components (6 automated steps)
+# Deploy all components (7 automated steps)
 ./scripts/deploy-all.sh
 ```
 

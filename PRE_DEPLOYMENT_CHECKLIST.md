@@ -27,7 +27,7 @@
 - **Deployment Method:** Azure CLI (via bash scripts)
 - **Configuration:** `config/environment-variables.sh` loaded by scripts
 - **Auto-generated:** `.env` file with unique resource names
-- **Orchestration:** `scripts/deploy-all.sh` runs 6 deployment phases
+- **Orchestration:** `scripts/deploy-all.sh` runs 7 deployment phases
 
 ---
 

@@ -146,7 +146,7 @@ code config/environment-variables.sh
 # This makes all configuration values available to deployment scripts
 source config/environment-variables.sh
 
-# Deploy all components (6 automated steps)
+# Deploy all components (7 automated steps)
 ./scripts/deploy-all.sh
 ```
 
@@ -256,7 +256,7 @@ docs/
 ### Phase 3: Deployment (20 mins)
 1. Load environment: `source config/environment-variables.sh`
 2. Run `./scripts/deploy-all.sh`
-3. Monitor deployment progress (6 automated steps)
+3. Monitor deployment progress (7 automated steps)
 4. Verify cluster health
 
 ### Phase 4: Validation (10 mins)

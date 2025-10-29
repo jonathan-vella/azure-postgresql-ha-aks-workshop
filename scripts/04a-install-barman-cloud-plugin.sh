@@ -106,13 +106,12 @@ if kubectl get deployment -n cnpg-system barman-cloud &> /dev/null; then
     echo "⚠️  Barman Cloud Plugin already installed. Checking version..."
     CURRENT_VERSION=$(kubectl get deployment -n cnpg-system barman-cloud -o jsonpath='{.spec.template.spec.containers[0].image}' | cut -d':' -f2 || echo "unknown")
     echo "   Current version: $CURRENT_VERSION"
-    
-    read -p "Do you want to reinstall/upgrade the plugin? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Skipping plugin installation."
-        exit 0
-    fi
+    echo "   Skipping reinstallation (plugin already present)."
+    echo ""
+    echo "==================================================================="
+    echo "✅ Barman Cloud Plugin Already Installed"
+    echo "==================================================================="
+    exit 0
 fi
 
 echo "Installing plugin from manifest..."

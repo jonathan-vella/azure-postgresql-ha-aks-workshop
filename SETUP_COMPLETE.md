@@ -18,10 +18,11 @@ azure-postgresql-ha-aks-workshop/
 │   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity)
 │   ├── 03-configure-workload-identity.sh # Federated credentials setup
 │   ├── 04-deploy-cnpg-operator.sh     # Installs CNPG operator via Helm
-│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer + Barman Plugin
+│   ├── 04a-install-barman-cloud-plugin.sh # Installs Barman Cloud Plugin v0.8.0
+│   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer
 │   ├── 06-configure-monitoring.sh     # Configures Azure Monitor + Grafana
 │   ├── 07-test-pgbench.sh             # Tests pgbench (direct + pooler connections)
-│   ├── deploy-all.sh                  # ⭐ Master orchestration script (runs steps 02-06)
+│   ├── deploy-all.sh                  # ⭐ Master orchestration script (runs steps 02-06 + 04a)
 │   └── setup-prerequisites.sh         # Installs required tools
 ├── kubernetes/
 │   ├── postgresql-cluster.yaml        # Reference manifest (not directly used)
@@ -36,9 +37,10 @@ azure-postgresql-ha-aks-workshop/
 ### Key Files Explained:
 - **`.env`**: Auto-generated on devcontainer startup with unique resource names
 - **`config/environment-variables.sh`**: Template loaded by deployment scripts
-- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates steps 02-06
-- **Scripts 02-06**: Individual deployment phases using Azure CLI and Helm
-- **Script 05**: Deploys PostgreSQL cluster with embedded Barman Cloud Plugin v0.8.0 configuration
+- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 7 deployment steps
+- **Scripts 02-06 + 04a**: Individual deployment phases using Azure CLI and Helm
+- **Script 04a**: Installs Barman Cloud Plugin v0.8.0 (required for backup/restore operations)
+- **Script 05**: Deploys PostgreSQL cluster and configures it to use the Barman Cloud Plugin
 - **Script 07**: Tests both direct PostgreSQL and PgBouncer pooler connections
 
 ## 🔄 Deployment Flow
@@ -169,7 +171,7 @@ az account show  # Verify subscription
 # Ensure environment variables are loaded
 source .env  # or source config/environment-variables.sh
 
-# Run complete deployment (6 automated steps)
+# Run complete deployment (7 automated steps)
 bash scripts/deploy-all.sh
 ```
 
@@ -177,9 +179,10 @@ This will execute all phases:
 1. Create Azure infrastructure (Resource Group, AKS, Storage, Identity, VM Subnet)
 2. Configure Workload Identity with Federated Credentials
 3. Deploy CloudNativePG operator via Helm (1.27.1)
-4. Deploy PostgreSQL HA cluster (3 instances + 3 PgBouncer poolers with Barman Cloud Plugin v0.8.0)
-5. Configure Azure Monitor and Grafana
-6. Display connection information
+4. Install Barman Cloud Plugin v0.8.0 (modern backup architecture)
+5. Deploy PostgreSQL HA cluster (3 instances + 3 PgBouncer poolers)
+6. Configure Azure Monitor and Grafana
+7. Display connection information
 
 ### Step 4: Verify Deployment
 ```bash
@@ -254,6 +257,7 @@ psql -h localhost -p 5433 -U app -d appdb
 - Azure Blob Storage with Workload Identity authentication
 - 7-day retention with point-in-time recovery (PITR)
 - WAL compression with gzip, 4 parallel streams
+- ObjectStore CRD for better separation of concerns
 
 ✅ **Azure Integration**
 - Workload Identity for secure authentication
