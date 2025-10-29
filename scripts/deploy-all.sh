@@ -72,6 +72,12 @@ echo "Step 4a/7: Installing Barman Cloud Plugin..."
 echo -e "${GREEN}✓ Barman Cloud Plugin installed${NC}"
 echo ""
 
+# Step 4b: Install Prometheus Operator
+echo "Step 4b/7: Installing Prometheus Operator..."
+"${SCRIPT_DIR}/04b-install-prometheus-operator.sh"
+echo -e "${GREEN}✓ Prometheus Operator installed${NC}"
+echo ""
+
 # Step 5: Deploy PostgreSQL cluster
 echo "Step 5/7: Deploying PostgreSQL HA cluster..."
 "${SCRIPT_DIR}/05-deploy-postgresql-cluster.sh"
