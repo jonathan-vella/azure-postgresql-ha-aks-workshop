@@ -7,7 +7,7 @@ A complete automation framework for deploying a **highly available PostgreSQL da
 > **⚠️ IMPORTANT: Lab and Proof-of-Concept Use Only**  
 > This code is provided strictly for **lab environments and proof-of-concept purposes only**. It is not intended for production use. Additional hardening, security reviews, compliance validation, and operational procedures are required before considering any production deployment.
 
-[![Version](https://img.shields.io/badge/Version-v1.0.0-blue)](#) [![Status](https://img.shields.io/badge/Status-Lab%2FPoC-yellow)](#) [![License](https://img.shields.io/badge/License-MIT-green)](#) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.0-336791?logo=postgresql)](#) [![AKS](https://img.shields.io/badge/AKS-1.32-0078D4?logo=kubernetes)](#)
+[![Version](https://img.shields.io/badge/Version-v1.0.0-blue)](#) [![Status](https://img.shields.io/badge/Status-Lab%2FPoC-yellow)](#) [![License](https://img.shields.io/badge/License-MIT-green)](#) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.0-336791?logo=postgresql)](#) [![AKS](https://img.shields.io/badge/AKS-1.32-0078D4?logo=kubernetes)](#) [![CNPG](https://img.shields.io/badge/CloudNativePG-1.27.1-326CE5?logo=kubernetes)](#) [![Azure](https://img.shields.io/badge/Azure-CLI-0078D4?logo=microsoft-azure)](#) [![HA](https://img.shields.io/badge/HA-RPO:0_RTO:<10s-success)](#) [![Performance](https://img.shields.io/badge/TPS-8K--10K-orange)](#)
 
 ---
 

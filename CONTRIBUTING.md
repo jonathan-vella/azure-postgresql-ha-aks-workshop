@@ -19,7 +19,7 @@ Be respectful, inclusive, and professional in all interactions. We're committed 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/azure-postgresql-ha-aks-workshop.git
+git clone https://github.com/jonathan-vella/azure-postgresql-ha-aks-workshop.git
 cd azure-postgresql-ha-aks-workshop
 
 # Create a feature branch

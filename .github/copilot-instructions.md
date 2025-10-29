@@ -1,38 +1,61 @@
 # Azure PostgreSQL HA on AKS Workshop - Copilot Instructions
 
-This project automates the deployment of a highly available PostgreSQL database on Azure Kubernetes Service (AKS) using CloudNativePG operator with Premium v2 disk storage.
+**Version**: v1.0.0 | **Last Updated**: October 2025
+
+This project automates the deployment of a highly available PostgreSQL database on Azure Kubernetes Service (AKS) using CloudNativePG operator with Premium v2 disk storage and PgBouncer connection pooling.
 
 ## Project Overview
 
+- **Version**: v1.0.0 (Semantic Versioning)
 - **Language**: Azure CLI (Infrastructure), YAML (Kubernetes), Bash (Scripts)
 - **Primary Purpose**: Automation framework for PostgreSQL HA on AKS following Microsoft reference implementation
+- **Target Performance**: 8,000-10,000 TPS with <10s failover (RPO=0)
 - **Key Technologies**:
-  - Azure Kubernetes Service (AKS)
-  - CloudNativePG Operator
-  - Premium SSD v2 Disks
+  - Azure Kubernetes Service (AKS) 1.32
+  - CloudNativePG Operator 1.27.1
+  - PostgreSQL 18.0
+  - PgBouncer Connection Pooling (3 instances)
+  - Premium SSD v2 Disks (40K IOPS, 1,250 MB/s)
   - Azure Blob Storage for Backups
-  - Azure Monitor + Grafana for Observability
+  - Azure Monitor + Managed Grafana for Observability
   - Workload Identity with Federated Credentials
 
 ## Project Structure
 
 ```
+├── README.md                # Main project documentation (v1.0.0)
+├── 00_START_HERE.md         # Quick start guide
+├── CONTRIBUTING.md          # Contribution guidelines
+├── CHANGELOG.md             # Version history (Semantic Versioning)
+├── LICENSE                  # MIT License
 ├── config/                  # Configuration files
-│   └── environment-variables.sh    # Bash environment configuration
+│   └── environment-variables.sh    # Bash environment configuration (all parameters)
 ├── scripts/                 # Deployment automation (Azure CLI)
-│   ├── 02-create-infrastructure.sh         # Creates Azure resources
+│   ├── deploy-all.sh                       # Master orchestration (8 steps)
+│   ├── 02-create-infrastructure.sh         # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
 │   ├── 03-configure-workload-identity.sh   # Federated credentials
 │   ├── 04-deploy-cnpg-operator.sh          # Installs CNPG operator
 │   ├── 04a-install-barman-cloud-plugin.sh  # Installs Barman plugin for backups
 │   ├── 04b-install-prometheus-operator.sh  # Installs Prometheus for metrics
-│   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA
-│   ├── 06-configure-monitoring.sh          # Configures observability
+│   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA + PgBouncer + PodMonitor
+│   ├── 06-configure-monitoring.sh          # Configures Grafana + Azure Monitor
 │   ├── 07-display-connection-info.sh       # Shows connection endpoints
-│   └── deploy-all.sh                       # Master orchestration
+│   └── 07-test-pgbench.sh                  # Load testing tool
 ├── kubernetes/              # Kubernetes manifests
-│   └── postgresql-cluster.yaml  # Reference manifest (not used in deployment)
-└── docs/                    # Documentation
-    └── README.md
+│   └── postgresql-cluster.yaml  # Reference manifest (NOT used in deployment)
+├── grafana/                 # Grafana dashboards
+│   └── grafana-cnpg-ha-dashboard.json  # Pre-built dashboard (9 panels)
+└── docs/                    # Comprehensive documentation
+    ├── README.md                       # Full technical guide
+    ├── SETUP_COMPLETE.md               # Complete deployment guide
+    ├── QUICK_REFERENCE.md              # Command cheat sheet
+    ├── COST_ESTIMATION.md              # Budget planning (~$2,873/month)
+    ├── PRE_DEPLOYMENT_CHECKLIST.md     # Pre-flight checks
+    ├── AZURE_MONITORING_SETUP.md       # Monitoring setup
+    ├── GRAFANA_DASHBOARD_GUIDE.md      # Dashboard usage
+    ├── IMPORT_DASHBOARD_NOW.md         # Dashboard import
+    ├── FAILOVER_TESTING.md             # HA testing procedures
+    └── VM_SETUP_GUIDE.md               # Load test VM setup
 ```
 
 ## Key Files and Their Purposes
@@ -142,11 +165,17 @@ kubectl apply -f kubernetes/backup-ondemand.yaml -n cnpg-database
 **DO NOT create new documentation files unless explicitly requested.** This project has comprehensive documentation covering all use cases.
 
 ### Existing Documentation (Use These)
-- **README.md** - Main entry point, quick start, deployment overview
+- **README.md** - Main entry point, quick start, deployment overview, architecture
+- **00_START_HERE.md** - Quick start guide for new users
+- **CHANGELOG.md** - Version history (Keep a Changelog format)
+- **CONTRIBUTING.md** - Contribution guidelines
 - **.devcontainer/README.md** - DevContainer setup and usage
 - **docs/README.md** - Detailed PostgreSQL HA deployment guide
-- **QUICK_REFERENCE.md** - Common commands and troubleshooting
-- **SETUP_COMPLETE.md** - Getting started after setup
+- **docs/SETUP_COMPLETE.md** - Complete setup guide with all steps
+- **docs/QUICK_REFERENCE.md** - Command cheat sheet
+- **docs/COST_ESTIMATION.md** - Hourly/monthly cost breakdown (~$2,873/month)
+- **docs/GRAFANA_DASHBOARD_GUIDE.md** - Dashboard usage and metrics
+- **docs/FAILOVER_TESTING.md** - HA testing procedures
 - **.github/copilot-instructions.md** - This file
 
 ### When to Create a New Document
@@ -186,10 +215,12 @@ Only create a new document if:
 ## Important Notes
 
 - **Before Deploying**: Ensure Azure subscription has sufficient quota
-- **Sensitive Data**: Change default PostgreSQL password in `kubernetes/postgresql-cluster.yaml`
+- **Sensitive Data**: Change default PostgreSQL password in `config/environment-variables.sh`
 - **Backup Validation**: Regularly test restore procedures
 - **Monitoring Setup**: Ensure Grafana access is properly secured
-- **Cost Monitoring**: Premium v2 disks have different pricing; set budget alerts
+- **Cost Monitoring**: Premium v2 disks have different pricing (~$2,873/month); set budget alerts
+- **Performance**: Configuration optimized for 8,000-10,000 TPS with <10s failover
+- **Node Pools**: 2 system nodes (D4s_v5) + 3 user nodes (E8as_v6) for workload isolation
 
 ---
 

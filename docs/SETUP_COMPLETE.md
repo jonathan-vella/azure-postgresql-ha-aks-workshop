@@ -51,7 +51,7 @@ azure-postgresql-ha-aks-workshop/
 
 ```mermaid
 graph TD
-    A["🚀 START: Run Deployment Script"] --> D["Bash<br/>deploy-postgresql-ha.sh"]
+    A["🚀 START: Run Deployment Script"] --> D["Bash<br/>deploy-all.sh"]
     
     D --> E["📋 Validate Prerequisites"]
     
@@ -394,8 +394,8 @@ CNPG_VERSION="0.26.1"                         # CloudNativePG Helm chart version
    ```
 
 3. **Review Region**:
-   - Check `config/deployment-config.json` for region setting
-   - Default: `canadacentral`
+   - Check `config/environment-variables.sh` for region setting
+   - Default: `eastus2`
    - Verify Premium v2 disk support in your chosen region
 
 4. **Azure Authentication**:

@@ -6,47 +6,50 @@ Your **Azure PostgreSQL HA on AKS Workshop** repository is **100% complete** and
 
 ---
 
-## 📦 Deliverables (15 Files)
+## 📦 Project Deliverables
 
-### Documentation (7 files)
-- ✅ **README.md** - Main GitHub README with project overview
-- ✅ **docs/SETUP_COMPLETE.md** - Complete setup guide with 10 steps
-- ✅ **docs/QUICK_REFERENCE.md** - Command reference cheat sheet
-- ✅ **docs/COST_ESTIMATION.md** - Hourly/monthly cost breakdown
-- ✅ **CONTRIBUTING.md** - Contribution guidelines for community
+### 📄 Documentation (12 files)
+- ✅ **README.md** - Main project documentation with architecture
+- ✅ **00_START_HERE.md** - This file - quick start guide
+- ✅ **CONTRIBUTING.md** - Contribution guidelines
+- ✅ **CHANGELOG.md** - Version history (Semantic Versioning)
+- ✅ **LICENSE** - MIT License
+- ✅ **docs/SETUP_COMPLETE.md** - Complete deployment guide
+- ✅ **docs/QUICK_REFERENCE.md** - Command cheat sheet
+- ✅ **docs/COST_ESTIMATION.md** - Budget planning (~$2,873/month)
 - ✅ **docs/README.md** - Comprehensive technical documentation
 - ✅ **docs/PRE_DEPLOYMENT_CHECKLIST.md** - Pre-deployment validation
+- ✅ **docs/GRAFANA_DASHBOARD_GUIDE.md** - Dashboard usage guide
+- ✅ **docs/FAILOVER_TESTING.md** - HA testing procedures
 
-### Infrastructure Code (3 files)
-- ✅ **bicep/main.bicep** - Complete AKS cluster infrastructure
-  - 3-zone deployment for HA
-  - Virtual Network with NSGs
-  - Storage Account for backups
-  - Managed Identities for Workload Identity
-  - Log Analytics + Grafana
+### 🚀 Deployment Automation (10+ scripts)
+- ✅ **scripts/deploy-all.sh** - Master orchestration (8 automated steps)
+- ✅ **scripts/02-create-infrastructure.sh** - Azure resources (AKS, Storage, Identity, Bastion, NAT Gateway)
+- ✅ **scripts/03-configure-workload-identity.sh** - Federated credentials
+- ✅ **scripts/04-deploy-cnpg-operator.sh** - CloudNativePG operator
+- ✅ **scripts/04a-install-barman-cloud-plugin.sh** - Barman backup plugin
+- ✅ **scripts/04b-install-prometheus-operator.sh** - Prometheus for metrics
+- ✅ **scripts/05-deploy-postgresql-cluster.sh** - PostgreSQL HA + PgBouncer
+- ✅ **scripts/06-configure-monitoring.sh** - Grafana + Azure Monitor
+- ✅ **scripts/07-display-connection-info.sh** - Connection details
+- ✅ **scripts/setup-prerequisites.sh** - Tool installation
 
-- ✅ **kubernetes/postgresql-cluster.yaml** - CNPG PostgreSQL cluster
-  - 3-instance HA topology
-  - Premium v2 StorageClass
-  - WAL archiving configuration
-  - Backup retention (7 days)
+### ⚙️ Configuration
+- ✅ **config/environment-variables.sh** - All deployment parameters
+  - Resource names, regions, VM SKUs
+  - Storage configuration (IOPS, throughput)
+  - PostgreSQL settings (memory, CPU, replicas)
+  - Network configuration
+  - Auto-detects public IP for firewall
 
-- ✅ **config/deployment-config.json** - Centralized configuration
-  - All parameters externalized
-  - AKS, storage, PostgreSQL settings
-  - Easy customization
+### 🎨 Monitoring & Dashboards
+- ✅ **grafana/grafana-cnpg-ha-dashboard.json** - Pre-built Grafana dashboard
+  - 9 monitoring panels
+  - Cluster health, replication lag, TPS, connections
+  - Backup status, failover detection
 
-### Deployment Automation (2 files)
-- ✅ **scripts/deploy-postgresql-ha.sh** - Bash deployment
-- ✅ **scripts/setup-prerequisites.sh** - Prerequisites installer
-
-### Configuration (2 files)
-- ✅ **.github/copilot-instructions.md** - AI assistant context
-- ✅ **.gitignore** - Git ignore patterns
-
-### Additional Files (1 file)
-- ✅ **LICENSE** - MIT License
-- ✅ **verify-github-ready.sh** - Pre-push verification script
+### 📦 Kubernetes Manifests
+- ✅ **kubernetes/postgresql-cluster.yaml** - Reference manifest (configuration in scripts)
 
 ---
 
@@ -111,7 +114,7 @@ Your **Azure PostgreSQL HA on AKS Workshop** repository is **100% complete** and
    git init
    git add .
    git commit -m "feat: Initial commit - PostgreSQL HA on AKS workshop"
-   git remote add origin https://github.com/yourusername/azure-postgresql-ha-aks-workshop.git
+   git remote add origin https://github.com/jonathan-vella/azure-postgresql-ha-aks-workshop.git
    git branch -M main
    git push -u origin main
    ```
