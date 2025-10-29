@@ -82,6 +82,9 @@ GRAFANA_RESOURCE_ID=$(az grafana create \
     --query "id" \
     --output tsv)
 
+# Convert to lowercase for AKS compatibility (AKS requires lowercase provider names)
+GRAFANA_RESOURCE_ID=$(echo "$GRAFANA_RESOURCE_ID" | tr '[:upper:]' '[:lower:]')
+
 # Create Azure Monitor workspace
 echo "Creating Azure Monitor workspace: $AMW_PRIMARY"
 AMW_RESOURCE_ID=$(az monitor account create \
@@ -165,7 +168,6 @@ az aks create \
     --enable-azure-monitor-metrics \
     --azure-monitor-workspace-resource-id "$AMW_RESOURCE_ID" \
     --grafana-resource-id "$GRAFANA_RESOURCE_ID" \
-    --api-server-authorized-ip-ranges "$MY_PUBLIC_CLIENT_IP" \
     --tier standard \
     --kubernetes-version "$AKS_CLUSTER_VERSION" \
     --zones 1 2 3 \
