@@ -105,7 +105,7 @@ source .deployment-outputs
 
 # Create Ubuntu 24.04 VM in the dedicated VM subnet (NO public IP - using Bastion)
 VM_NAME="${AKS_PRIMARY_CLUSTER_NAME}-test-vm"
-VM_SIZE="Standard_D4s_v5"  # 4 vCPU, 16 GB RAM
+VM_SIZE="Standard_E8as_v6"  # 4 vCPU, 16 GB RAM
 
 az vm create \
   --resource-group "$RESOURCE_GROUP_NAME" \

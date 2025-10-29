@@ -10,7 +10,7 @@ This guide covers setting up Azure VMs in the dedicated VM subnet for external f
 
 ## VM Specifications
 
-- **VM Size**: Standard_D4s_v5 (4 vCPU, 16 GB RAM)
+- **VM Size**: Standard_E8as_v6 (4 vCPU, 16 GB RAM)
 - **OS**: Latest Ubuntu LTS
 - **Location**: Same region as AKS cluster
 - **Network**: Connected to VM subnet (10.1.0.0/27)
@@ -29,7 +29,7 @@ source .deployment-outputs
 az vm create \
   --resource-group "$RESOURCE_GROUP_NAME" \
   --name "pgtest-vm-01" \
-  --size "Standard_D4s_v5" \
+  --size "Standard_E8as_v6" \
   --image "Ubuntu2204" \
   --vnet-name "${RESOURCE_GROUP_NAME}-vnet" \
   --subnet "$VM_SUBNET_ID" \
@@ -304,7 +304,7 @@ az network bastion delete \
 
 | Component | Value |
 |-----------|-------|
-| VM Size | Standard_D4s_v5 |
+| VM Size | Standard_E8as_v6 |
 | OS | Ubuntu 22.04 LTS |
 | Subnet | 10.1.0.0/27 (VM subnet) |
 | PostgreSQL Client | Version 17 |

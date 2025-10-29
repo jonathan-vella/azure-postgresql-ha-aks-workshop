@@ -105,7 +105,7 @@ bash scripts/deploy-all.sh
 - Storage Account: `$PG_PRIMARY_STORAGE_ACCOUNT_NAME`
 - AKS Cluster: `$AKS_PRIMARY_CLUSTER_NAME`
   - System node pool: Standard_D2s_v5
-  - User node pool: Standard_D4s_v5 (labeled for PostgreSQL)
+  - User node pool: Standard_E8as_v6 (labeled for PostgreSQL)
 - Log Analytics: `$ALA_PRIMARY`
 - Azure Monitor Workspace: `$AMW_PRIMARY`
 - Managed Grafana: `$GRAFANA_PRIMARY`

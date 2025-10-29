@@ -333,7 +333,7 @@ psql "host=pg-primary-rw.cnpg-database.svc.cluster.local port=5432 dbname=appdb 
 - ✅ Network Security Group
 - ✅ AKS Cluster (1.32)
   - System node pool: 2 x Standard_D2s_v5
-  - Postgres node pool: 3 x Standard_D4s_v5
+  - Postgres node pool: 3 x Standard_E8as_v6
 - ✅ Managed Identity (Workload Identity)
 - ✅ Storage Account (ZRS, Standard_V2)
 - ✅ Log Analytics Workspace

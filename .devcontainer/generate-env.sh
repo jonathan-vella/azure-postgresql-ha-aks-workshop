@@ -52,7 +52,7 @@ export AKS_UAMI_CLUSTER_IDENTITY_NAME="mi-aks-\${LOCAL_NAME}-\${SUFFIX}"
 # Node pool configuration
 export SYSTEM_NODE_POOL_VMSKU="\${SYSTEM_VM_SKU:-Standard_D2s_v5}"
 export USER_NODE_POOL_NAME="postgres"
-export USER_NODE_POOL_VMSKU="\${USER_VM_SKU:-Standard_D4s_v5}"
+export USER_NODE_POOL_VMSKU="\${USER_VM_SKU:-Standard_E8as_v6}"
 
 # PostgreSQL configuration
 export PG_NAMESPACE="cnpg-database"
