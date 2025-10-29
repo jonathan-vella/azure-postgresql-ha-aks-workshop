@@ -22,6 +22,6 @@
     }
   },
   "forwardPorts": [5432, 3000],
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq openssl shellcheck && curl -fsSL https://github.com/cloudnative-pg/cloudnative-pg/releases/latest/download/kubectl-cnpg-linux-x64 -o /tmp/kubectl-cnpg && sudo install -o root -g root -m 0755 /tmp/kubectl-cnpg /usr/local/bin/kubectl-cnpg && bash .devcontainer/generate-env.sh && echo '✅ DevContainer ready! Run: source .env'",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y jq openssl shellcheck && curl -fsSL https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v1.27.1/kubectl-cnpg-linux-x64 -o /tmp/kubectl-cnpg && sudo install -o root -g root -m 0755 /tmp/kubectl-cnpg /usr/local/bin/kubectl-cnpg && bash .devcontainer/generate-env.sh && echo '✅ DevContainer ready! Run: source .env'",
   "remoteUser": "vscode"
 }
