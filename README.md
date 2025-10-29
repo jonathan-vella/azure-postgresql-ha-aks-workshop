@@ -705,9 +705,9 @@ export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
 ## 🔗 Important Links
 
 - **CloudNativePG**: https://cloudnative-pg.io/
-- **Azure AKS**: https://learn.microsoft.com/azure/aks/
-- **Premium v2 Disks**: https://learn.microsoft.com/azure/virtual-machines/disks-types
-- **Well-Architected Framework**: https://learn.microsoft.com/azure/architecture/framework/
+- **Azure AKS**: https://learn.microsoft.com/en-us/azure/aks/
+- **Premium v2 Disks**: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types
+- **Well-Architected Framework**: https://learn.microsoft.com/en-us/azure/architecture/framework/
 
 ---
 

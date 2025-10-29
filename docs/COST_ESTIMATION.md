@@ -347,7 +347,7 @@ Criticality: Tier1 | Tier2 | Tier3
 - **Premium SSD v2 Pricing**: https://azure.microsoft.com/pricing/details/managed-disks/
 - **Azure Monitor Pricing**: https://azure.microsoft.com/pricing/details/monitor/
 - **Grafana Pricing**: https://azure.microsoft.com/pricing/details/managed-grafana/
-- **Cost Optimization Best Practices**: https://learn.microsoft.com/azure/well-architected/cost/
+- **Cost Optimization Best Practices**: https://learn.microsoft.com/en-us/azure/well-architected/cost/
 
 ---
 

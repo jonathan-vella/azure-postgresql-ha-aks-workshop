@@ -175,9 +175,9 @@ Your **Azure PostgreSQL HA on AKS Workshop** repository is **100% complete** and
 ## 🔗 Important Resources
 
 - **CloudNativePG**: https://cloudnative-pg.io/
-- **Azure AKS Docs**: https://learn.microsoft.com/azure/aks/
-- **Premium v2 Disks**: https://learn.microsoft.com/azure/virtual-machines/disks-types
-- **Well-Architected Framework**: https://learn.microsoft.com/azure/architecture/framework/
+- **Azure AKS Docs**: https://learn.microsoft.com/en-us/azure/aks/
+- **Premium v2 Disks**: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types
+- **Well-Architected Framework**: https://learn.microsoft.com/en-us/azure/architecture/framework/
 
 ---
 

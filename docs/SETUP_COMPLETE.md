@@ -123,8 +123,8 @@ chmod +x scripts/setup-prerequisites.sh
 
 **On Windows:**
 Install manually or use Windows Subsystem for Linux (WSL):
-- Azure CLI: https://learn.microsoft.com/cli/azure/install-azure-cli-windows
-- kubectl: https://learn.microsoft.com/azure/aks/kubernetes-walkthrough#install-the-kubernetes-cli
+- Azure CLI: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows
+- kubectl: https://learn.microsoft.com/en-us/azure/aks/kubernetes-walkthrough#install-the-kubernetes-cli
 - Helm: https://helm.sh/docs/intro/install/
 - jq: https://stedolan.github.io/jq/download/
 - OpenSSL: https://slproweb.com/products/Win32OpenSSL.html
@@ -532,9 +532,9 @@ After deployment, verify:
 ## 🎓 Learning Resources
 
 - CloudNativePG: https://cloudnative-pg.io/
-- Azure AKS: https://learn.microsoft.com/azure/aks/
-- Premium SSD v2: https://learn.microsoft.com/azure/virtual-machines/disks-types
-- Well-Architected Framework: https://learn.microsoft.com/azure/architecture/framework/
+- Azure AKS: https://learn.microsoft.com/en-us/azure/aks/
+- Premium SSD v2: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types
+- Well-Architected Framework: https://learn.microsoft.com/en-us/azure/architecture/framework/
 
 ---
 

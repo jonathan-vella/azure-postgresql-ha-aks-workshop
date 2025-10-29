@@ -807,7 +807,7 @@ kubectl get svc -n cnpg-database -o wide
 - **CloudNativePG Failover**: https://cloudnative-pg.io/documentation/current/failover/
 - **PostgreSQL Replication**: https://www.postgresql.org/docs/17/warm-standby.html
 - **PgBouncer Documentation**: https://www.pgbouncer.org/
-- **Azure AKS Best Practices**: https://learn.microsoft.com/azure/aks/best-practices
+- **Azure AKS Best Practices**: https://learn.microsoft.com/en-us/azure/aks/best-practices
 
 ---
 
