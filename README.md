@@ -1,11 +1,13 @@
-# � Azure PostgreSQL HA on AKS Workshop
+# 🚀 Azure PostgreSQL HA on AKS Workshop
 
-A complete automation framework for deploying a **highly available PostgreSQL database** on Azure Kubernetes Service with Premium v2 storage.
+**Version**: `v1.0.0` | **License**: MIT | **Status**: Lab & PoC Ready
+
+A complete automation framework for deploying a **highly available PostgreSQL database** on Azure Kubernetes Service with Premium v2 storage, CloudNativePG operator, and PgBouncer connection pooling.
 
 > **⚠️ IMPORTANT: Lab and Proof-of-Concept Use Only**  
 > This code is provided strictly for **lab environments and proof-of-concept purposes only**. It is not intended for production use. Additional hardening, security reviews, compliance validation, and operational procedures are required before considering any production deployment.
 
-[![Status](https://img.shields.io/badge/Status-Lab%2FPoC-yellow)](#) [![License](https://img.shields.io/badge/License-MIT-blue)](#) [![Maintained](https://img.shields.io/badge/Maintained%3F-Yes-green)](#)
+[![Version](https://img.shields.io/badge/Version-v1.0.0-blue)](#) [![Status](https://img.shields.io/badge/Status-Lab%2FPoC-yellow)](#) [![License](https://img.shields.io/badge/License-MIT-green)](#) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.0-336791?logo=postgresql)](#) [![AKS](https://img.shields.io/badge/AKS-1.32-0078D4?logo=kubernetes)](#)
 
 ---
 
@@ -91,19 +93,44 @@ graph TB
 
 ## ✨ Key Features
 
-| Feature | Details |
-|---------|---------|
-| **High Availability** | 3-node PostgreSQL cluster (1 primary + 1 quorum sync replica + 1 async replica) with automatic failover (<10s target) |
-| **Connection Pooling** | 3 PgBouncer instances in transaction mode (10,000 max connections, 25 default pool size per instance) for efficient connection management |
-| **Data Durability** | Synchronous replication (RPO = 0) - zero data loss on failover |
-| **Zone Redundancy** | Deployment across 3 Azure Availability Zones |
-| **Performance** | Optimized for 8,000-10,000 TPS with 40K IOPS Premium SSD v2 disks |
-| **Storage** | Premium SSD v2 with 40K IOPS & 1,250 MB/s throughput per disk (200 GiB each) |
-| **Backup & Recovery** | Automated WAL archiving + full backups to Azure Blob Storage, 7-day retention |
-| **Security** | Workload Identity, SCRAM-SHA-256 auth, NSGs, RBAC, encrypted backups |
-| **Monitoring** | Prometheus metrics collection, Grafana dashboards, Azure Monitor integration |
-| **Infrastructure** | Pure Azure CLI automation following Microsoft reference implementation |
-| **Operations** | CloudNativePG 1.27.1 operator for automated management, health checks, and scaling |
+### 🔧 Infrastructure & Deployment
+- **Full Automation**: Pure Azure CLI scripts following Microsoft reference implementation
+- **Separate Node Pools**: 2 system nodes (D4s_v5) + 3 user nodes (E8as_v6) for workload isolation
+- **Zone Redundancy**: Deployment across 3 Azure Availability Zones
+- **Premium Storage**: Premium SSD v2 with 40K IOPS & 1,250 MB/s per disk (200 GiB)
+- **DevContainer Ready**: Pre-configured environment with all tools installed
+
+### 🛡️ High Availability & Reliability
+- **3-Node Cluster**: 1 primary + 1 quorum sync replica + 1 async replica
+- **Automatic Failover**: <10 second RTO with zero data loss (RPO = 0)
+- **Data Durability**: Synchronous replication with remote_apply guarantee
+- **Connection Pooling**: 3 PgBouncer instances handling 10,000+ concurrent connections
+- **Health Monitoring**: Automated health checks with self-healing capabilities
+
+### 📊 Performance & Scalability
+- **Target Throughput**: Optimized for 8,000-10,000 TPS
+- **Dynamic Resources**: PostgreSQL parameters auto-calculate from memory allocation
+- **Efficient Pooling**: Transaction-mode pooling for optimal connection management
+- **Load Balancing**: Automatic read distribution across replicas
+
+### 🔐 Security & Compliance
+- **Workload Identity**: Federated credentials (no secrets in pods)
+- **Authentication**: SCRAM-SHA-256 password encryption
+- **Network Security**: NSGs, private networking, NAT Gateway
+- **Encryption**: At-rest and in-transit encryption
+- **RBAC**: Kubernetes role-based access control
+
+### 📈 Observability & Operations
+- **Grafana Dashboards**: Pre-built dashboard with 9 monitoring panels
+- **Prometheus Metrics**: Real-time cluster health and performance metrics
+- **Azure Monitor**: Centralized log aggregation and alerting
+- **CloudNativePG**: 1.27.1 operator for automated lifecycle management
+
+### 💾 Backup & Recovery
+- **Automated Backups**: WAL archiving + base backups to Azure Blob Storage
+- **7-Day Retention**: Configurable backup retention policies
+- **Point-in-Time Recovery**: PITR capability via WAL archives
+- **Geo-Redundancy**: Optional GRS for disaster recovery
 
 ---
 
@@ -183,12 +210,15 @@ psql -h localhost -U app -d appdb
 
 ---
 
-### 📋 Getting Started Documents
-```
-docs/SETUP_COMPLETE.md          👈 START HERE - Complete setup guide
-docs/QUICK_REFERENCE.md         👈 Quick commands cheat sheet
-docs/COST_ESTIMATION.md         👈 Hourly/monthly cost breakdown
-```
+### 📋 Documentation
+
+| Document | Description |
+|----------|-------------|
+| 📖 [**SETUP_COMPLETE.md**](docs/SETUP_COMPLETE.md) | 👈 **START HERE** - Complete setup guide |
+| ⚡ [**QUICK_REFERENCE.md**](docs/QUICK_REFERENCE.md) | Command cheat sheet |
+| 💰 [**COST_ESTIMATION.md**](docs/COST_ESTIMATION.md) | Hourly/monthly cost breakdown (~$2,873/month) |
+| 📊 [**GRAFANA_DASHBOARD_GUIDE.md**](docs/GRAFANA_DASHBOARD_GUIDE.md) | Dashboard usage and metrics |
+| 🔄 [**FAILOVER_TESTING.md**](docs/FAILOVER_TESTING.md) | High availability testing |
 
 ### ⚙️ Configuration
 ```
@@ -223,25 +253,49 @@ kubernetes/
     - Configuration values loaded from environment variables
 ```
 
-### 📚 Documentation
-```
-docs/
-├── README.md                    - Comprehensive full documentation
-├── SETUP_COMPLETE.md            - Getting started guide
-├── QUICK_REFERENCE.md           - Command cheat sheet
-├── COST_ESTIMATION.md           - Hourly/monthly costs
-├── PRE_DEPLOYMENT_CHECKLIST.md  - Pre-deployment validation
-├── AZURE_MONITORING_SETUP.md    - Monitoring configuration
-├── GRAFANA_DASHBOARD_GUIDE.md   - Dashboard usage guide
-├── IMPORT_DASHBOARD_NOW.md      - Dashboard import instructions
-├── FAILOVER_TESTING.md          - Failover test procedures
-└── VM_SETUP_GUIDE.md            - Load test VM setup
+### � Repository Structure
 
-.github/
-└── copilot-instructions.md - AI assistant guidance
-    - Project context
-    - File purposes
-    - Development guidelines
+```
+📦 azure-postgresql-ha-aks-workshop/
+├── 📄 README.md                        # Main project documentation
+├── 📄 00_START_HERE.md                 # Quick start guide
+├── 📄 CONTRIBUTING.md                  # Contribution guidelines
+├── 📄 LICENSE                          # MIT License
+│
+├── 📂 config/                          # Configuration files
+│   └── environment-variables.sh        # Bash environment config
+│
+├── 📂 scripts/                         # Deployment automation
+│   ├── deploy-all.sh                   # Master orchestration (8 steps)
+│   ├── 02-create-infrastructure.sh     # Azure resources
+│   ├── 03-configure-workload-identity.sh
+│   ├── 04-deploy-cnpg-operator.sh
+│   ├── 04a-install-barman-cloud-plugin.sh
+│   ├── 04b-install-prometheus-operator.sh
+│   ├── 05-deploy-postgresql-cluster.sh
+│   ├── 06-configure-monitoring.sh
+│   └── 07-display-connection-info.sh
+│
+├── 📂 kubernetes/                      # K8s manifests
+│   └── postgresql-cluster.yaml         # Reference manifest
+│
+├── 📂 grafana/                         # Grafana dashboards
+│   └── grafana-cnpg-ha-dashboard.json  # PostgreSQL HA dashboard
+│
+├── 📂 docs/                            # Comprehensive documentation
+│   ├── README.md                       # Full technical guide
+│   ├── SETUP_COMPLETE.md               # 👈 Start here
+│   ├── QUICK_REFERENCE.md              # Command cheat sheet
+│   ├── COST_ESTIMATION.md              # Budget planning
+│   ├── PRE_DEPLOYMENT_CHECKLIST.md     # Pre-flight checks
+│   ├── AZURE_MONITORING_SETUP.md       # Monitoring setup
+│   ├── GRAFANA_DASHBOARD_GUIDE.md      # Dashboard usage
+│   ├── IMPORT_DASHBOARD_NOW.md         # Dashboard import
+│   ├── FAILOVER_TESTING.md             # HA testing
+│   └── VM_SETUP_GUIDE.md               # Load test VM
+│
+└── 📂 .github/
+    └── copilot-instructions.md         # AI assistant context
 ```
 
 ---
@@ -659,13 +713,12 @@ export PGPASSWORD=$(kubectl get secret pg-primary-app -n cnpg-database \
 
 ## 📝 Version Information
 
-**Project Version**: 1.0  
-**Created**: October 2025  
-**AKS Version**: 1.32  
-**Kubernetes Version**: 1.32  
-**CNPG Version**: 1.27.1  
-**PostgreSQL Version**: 17.0  
-**PostgreSQL Version**: 16  
+**Project Version**: `v1.0.0` (Semantic Versioning)  
+**Release Date**: October 2025  
+**AKS Version**: `1.32`  
+**Kubernetes Version**: `1.32`  
+**CNPG Operator**: `1.27.1`  
+**PostgreSQL**: `18.0`  
 **Status**: ✅ Lab & PoC Ready
 
 ---

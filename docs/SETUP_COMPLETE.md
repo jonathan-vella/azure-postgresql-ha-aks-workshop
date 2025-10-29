@@ -1,6 +1,8 @@
-# Setup Complete ✅
+# 🚀 Setup Complete Guide
 
-Your Azure PostgreSQL HA on AKS Workshop project has been successfully created!
+**Version**: `v1.0.0` | **Last Updated**: October 2025
+
+Your complete guide to deploying PostgreSQL HA on AKS with CloudNativePG operator.
 
 ## 📦 What's Been Created
 

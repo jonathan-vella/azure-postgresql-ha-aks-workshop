@@ -1,4 +1,10 @@
-# Quick Reference Guide
+# ⚡ Quick Reference Guide
+
+**Version**: `v1.0.0` | **Last Updated**: October 2025
+
+Your command cheat sheet for PostgreSQL HA on AKS operations.
+
+---
 
 ## 📋 Files at a Glance
 

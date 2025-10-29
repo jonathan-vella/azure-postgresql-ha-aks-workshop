@@ -1,6 +1,18 @@
-# Cost Estimation - PostgreSQL HA on AKS
+# 💰 Cost Estimation - PostgreSQL HA on AKS
+
+**Version**: `v1.0.0` | **Last Updated**: October 2025
 
 **Deployment Overview**: 3-node PostgreSQL cluster on AKS with full monitoring, security, and load testing infrastructure.
+
+---
+
+## 💵 Quick Summary
+
+| Configuration | Monthly Cost | Use Case |
+|---------------|--------------|----------|
+| **Small (Dev/Test)** | ~$1,056 | Development and testing |
+| **Medium (Pre-Prod)** | ~$2,873 | Pre-production validation |
+| **Large (Production)** | ~$4,900 | Production with enhanced HA |
 
 ---
 
