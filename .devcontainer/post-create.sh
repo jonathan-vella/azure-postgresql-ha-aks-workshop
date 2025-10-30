@@ -24,9 +24,10 @@ apt-get update && apt-get install -y \
     gnupg \
     lsb-release \
     netcat-openbsd \
+    postgresql-client \
     > /dev/null 2>&1
 
-echo "✓ System tools installed"
+echo "✓ System tools installed (including postgresql-client)"
 echo ""
 
 # Install CNPG kubectl plugin
@@ -76,6 +77,7 @@ echo "  Azure CLI:     $(az version --query '"azure-cli"' -o tsv)"
 echo "  kubectl:       $(kubectl version --client -o json 2>/dev/null | jq -r '.clientVersion.gitVersion')"
 echo "  Helm:          $(helm version --short | cut -d'+' -f1)"
 echo "  jq:            $(jq --version)"
+echo "  psql:          $(psql --version | cut -d' ' -f3)"
 echo "  netcat:        $(nc -h 2>&1 | head -1 | cut -d' ' -f1-2)"
 echo "  CNPG plugin:   v1.27.1"
 echo "  Krew:          installed"
@@ -89,6 +91,7 @@ echo "  • Azure CLI (az)          - Azure cloud management"
 echo "  • kubectl                  - Kubernetes CLI"
 echo "  • Helm                     - Kubernetes package manager"
 echo "  • jq                       - JSON processor"
+echo "  • psql                     - PostgreSQL client"
 echo "  • netcat (nc)              - Network testing"
 echo "  • kubectl-cnpg             - CloudNativePG plugin"
 echo "  • kubectl-krew             - kubectl plugin manager"

@@ -71,9 +71,9 @@ export DISK_THROUGHPUT="\${DISK_THROUGHPUT:-1200}"
 export PG_STORAGE_SIZE="\${PG_STORAGE_SIZE:-200Gi}"
 
 # PostgreSQL database configuration
-export PG_DATABASE_NAME="\${PG_DATABASE_NAME:-appdb}"
-export PG_DATABASE_USER="\${PG_DATABASE_USER:-app}"
-export PG_DATABASE_PASSWORD="\${PG_DATABASE_PASSWORD:-SecurePassword123!}"
+export PG_DATABASE_NAME="appdb"
+export PG_DATABASE_USER="app"
+export PG_DATABASE_PASSWORD="SecurePassword123!"
 
 # PostgreSQL resource allocation (Safe for Standard_E8as_v6 with 20% AKS overhead)
 # Node capacity: 8 vCPU, 64GB - 20% AKS = 6.4 vCPU, 51.2GB available
