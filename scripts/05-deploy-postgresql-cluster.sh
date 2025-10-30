@@ -273,8 +273,8 @@ spec:
     poolMode: transaction
     parameters:
       max_client_conn: "10000"
-      default_pool_size: "25"
-      reserve_pool_size: "5"
+      default_pool_size: "100"           # Increased from 25 for higher throughput (Phase 5)
+      reserve_pool_size: "20"            # Increased proportionally
       reserve_pool_timeout: "3"
       max_db_connections: "500"
       max_user_connections: "500"

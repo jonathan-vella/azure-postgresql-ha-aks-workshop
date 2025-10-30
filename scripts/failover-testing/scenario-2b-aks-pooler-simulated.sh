@@ -72,10 +72,10 @@ PRIMARY_POD=$(kubectl get pods -n "${PG_NAMESPACE}" -l role=primary -o jsonpath=
 echo "Primary (to be deleted): $PRIMARY_POD"
 echo ""
 
-# Create workload ConfigMap (Phase 3: Use balanced 40/60 read/write workload)
-kubectl create configmap payment-gateway-workload \
+# Create workload ConfigMap (Phase 5: Use simple workload for maximum throughput)
+kubectl create configmap simple-failover-workload \
   -n "${PG_NAMESPACE}" \
-  --from-file=payment-gateway-workload.sql="$SCRIPT_DIR/payment-gateway-balanced-workload.sql" \
+  --from-file=simple-failover-workload.sql="$SCRIPT_DIR/simple-failover-workload.sql" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
 # Deploy pgbench pod
@@ -97,8 +97,8 @@ spec:
       echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
       pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=prepared \
         --max-tries=3 \
-        --file=/workload/payment-gateway-workload.sql --time=300 \
-        -c 30 -j 4 \
+        --file=/workload/simple-failover-workload.sql --time=300 \
+        -c 500 -j 8 \
         --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
       echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
     env:
@@ -112,7 +112,7 @@ spec:
     - {name: workload, mountPath: /workload}
   volumes:
   - {name: logs, emptyDir: {}}
-  - {name: workload, configMap: {name: payment-gateway-workload}}
+  - {name: workload, configMap: {name: simple-failover-workload}}
 EOF
 
 kubectl apply -f "$OUTPUT_DIR/pgbench-pod.yaml" >/dev/null
