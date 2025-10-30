@@ -251,7 +251,7 @@ EOF
 # Deploy PgBouncer Pooler separately (supported in CNPG 1.27.1)
 echo ""
 echo "Deploying PgBouncer Pooler for connection pooling..."
-kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<'POOLEREOF'
+kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
 apiVersion: postgresql.cnpg.io/v1
 kind: Pooler
 metadata:
@@ -306,7 +306,7 @@ spec:
               matchLabels:
                 cnpg.io/poolerName: ${PG_PRIMARY_CLUSTER_NAME}-pooler-rw
             topologyKey: "kubernetes.io/hostname"
-POOLEREOF
+EOF
 
 # Wait for cluster to be ready
 echo "Waiting for PostgreSQL cluster to be ready (this may take 5-10 minutes)..."
