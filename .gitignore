@@ -30,8 +30,10 @@ kubeconfig*
 
 # Environment & Secrets
 .env
+.env.*
 .env.local
 .env.*.local
+.env.backup*
 *.pem
 *.key
 secrets/

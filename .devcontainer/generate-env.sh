@@ -82,7 +82,7 @@ export PG_MEMORY="\${PG_MEMORY:-40Gi}"  # Leaves 11GB for PgBouncer (2GB) + syst
 export PG_CPU="\${PG_CPU:-4}"           # Leaves 2.4 vCPU for PgBouncer (1) + system (1.4)
 
 # CloudNativePG operator version
-export CNPG_VERSION="\${CNPG_VERSION:-0.22.1}"
+export CNPG_VERSION="\${CNPG_VERSION:-0.26.1}"
 
 # Monitoring configuration
 export GRAFANA_PRIMARY="grafana-\${LOCAL_NAME}-\${SUFFIX}"

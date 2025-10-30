@@ -21,12 +21,47 @@ echo ""
 echo "Step 1/8: Loading environment variables..."
 if [ -f "${SCRIPT_DIR}/../.env" ]; then
     source "${SCRIPT_DIR}/../.env"
+    echo -e "${GREEN}✓ Found existing .env file${NC}"
+    echo ""
+    echo "📋 Current configuration:"
+    echo "   Suffix:         $SUFFIX"
+    echo "   Resource Group: $RESOURCE_GROUP_NAME"
+    echo "   AKS Cluster:    $AKS_PRIMARY_CLUSTER_NAME"
+    echo ""
+    
+    read -p "🔄 Generate new suffix for fresh deployment? (y/N): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "🔄 Regenerating .env with new suffix..."
+        "${SCRIPT_DIR}/regenerate-env.sh" --yes
+        echo ""
+        echo "📝 Loading new environment variables..."
+        source "${SCRIPT_DIR}/../.env"
+        echo -e "${GREEN}✓ New environment variables loaded${NC}"
+        echo ""
+        echo "📋 New configuration:"
+        echo "   Suffix:         $SUFFIX"
+        echo "   Resource Group: $RESOURCE_GROUP_NAME"
+        echo "   AKS Cluster:    $AKS_PRIMARY_CLUSTER_NAME"
+        echo ""
+    else
+        echo -e "${GREEN}✓ Using existing configuration${NC}"
+        echo ""
+    fi
 else
-    echo -e "${RED}✗ .env file not found! Run: bash .devcontainer/generate-env.sh${NC}"
-    exit 1
+    echo -e "${YELLOW}⚠ .env file not found${NC}"
+    echo "Generating new .env file with unique suffix..."
+    bash "${SCRIPT_DIR}/../.devcontainer/generate-env.sh"
+    source "${SCRIPT_DIR}/../.env"
+    echo -e "${GREEN}✓ Environment variables generated and loaded${NC}"
+    echo ""
+    echo "📋 Generated configuration:"
+    echo "   Suffix:         $SUFFIX"
+    echo "   Resource Group: $RESOURCE_GROUP_NAME"
+    echo "   AKS Cluster:    $AKS_PRIMARY_CLUSTER_NAME"
+    echo ""
 fi
-echo -e "${GREEN}✓ Environment variables loaded${NC}"
-echo ""
 
 # Validate prerequisites
 echo "Validating prerequisites..."

@@ -37,6 +37,7 @@ source ../config/environment-variables.sh
 | **07-display-connection-info.sh** | Shows connection endpoints and credentials | <1 min | Cluster deployed |
 | **07a-validate-cluster.sh** | **Comprehensive cluster validation (connectivity, replication, HA)** | **2-3 min** | **Cluster deployed** |
 | **08-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
+| **regenerate-env.sh** | **Regenerates .env with new suffix (backs up old .env)** | **<1 min** | **None** |
 | **setup-prerequisites.sh** | Installs required tools (az, kubectl, helm, etc.) | 5-10 min | None (run first) |
 
 ---
@@ -467,7 +468,53 @@ kubectl logs -n cnpg-database <pod-name> | grep -i backup
 
 ---
 
-## 📚 Additional Resources
+## � Environment Management
+
+### `regenerate-env.sh` - Regenerate Environment with New Suffix
+
+**Purpose**: Creates a fresh `.env` file with a new random suffix for deploying a new environment.
+
+**When to use**:
+- Starting a completely new deployment
+- Testing deployment automation
+- Creating isolated environments (dev, test, prod)
+
+**What it does**:
+1. Shows current suffix and resource group name
+2. Prompts for confirmation
+3. Backs up current `.env` to `.env.backup-TIMESTAMP`
+4. Deletes old `.env`
+5. Generates new `.env` with fresh suffix
+6. Shows new configuration
+
+**Usage**:
+```bash
+./scripts/regenerate-env.sh
+
+# Example output:
+# 📋 Current configuration:
+#   Old Suffix:         0lt2bi0v
+#   Old Resource Group: rg-cnpg-0lt2bi0v
+# 
+# ⚠️  Delete current .env and generate new suffix? (y/N): y
+# 💾 Backed up old .env to: .env.backup-20251030-111500
+# 🗑️  Deleted old .env file
+# 🔧 Generating new .env file...
+# ✅ New .env file created!
+# 
+# New Suffix:         x4k9m2p7
+# Resource Group:     rg-cnpg-x4k9m2p7
+```
+
+**Then load and deploy**:
+```bash
+source .env
+./scripts/deploy-all.sh
+```
+
+---
+
+## �📚 Additional Resources
 
 - **Main Documentation**: [../docs/SETUP_COMPLETE.md](../docs/SETUP_COMPLETE.md)
 - **Quick Reference**: [../docs/QUICK_REFERENCE.md](../docs/QUICK_REFERENCE.md)

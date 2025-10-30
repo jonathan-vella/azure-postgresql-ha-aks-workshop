@@ -10,7 +10,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "${SCRIPT_DIR}/../.env" ]; then
     source "${SCRIPT_DIR}/../.env"
 else
-    source "${SCRIPT_DIR}/../config/environment-variables.sh"
+    echo "❌ Error: .env file not found. Run: bash .devcontainer/generate-env.sh"
+    exit 1
 fi
 source "${SCRIPT_DIR}/../.deployment-outputs"
 
