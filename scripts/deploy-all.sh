@@ -6,6 +6,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Setup automatic logging
+LOGS_DIR="${SCRIPT_DIR}/../logs"
+mkdir -p "$LOGS_DIR"
+LOG_FILE="${LOGS_DIR}/deployment-$(date +%Y%m%d-%H%M%S).log"
+
+# Function to log with tee (both console and file)
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # Color output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,6 +23,7 @@ NC='\033[0m' # No Color
 echo "================================================"
 echo "PostgreSQL HA Deployment on Azure AKS"
 echo "================================================"
+echo "📝 Logging to: $LOG_FILE"
 echo ""
 
 # Load environment variables
