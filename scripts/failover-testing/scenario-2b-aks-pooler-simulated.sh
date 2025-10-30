@@ -151,6 +151,126 @@ kubectl run consistency-check-post --rm -i --restart=Never --image=postgres:17 -
 
 kubectl logs pgbench-client-scenario2b -n "${PG_NAMESPACE}" > "$OUTPUT_DIR/pgbench-output.log"
 
+# Phase 4: Enhanced Latency Percentile Analysis
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "            PHASE 4: LATENCY PERCENTILE ANALYSIS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Calculate latency percentiles from pgbench log
+if [ -f "$OUTPUT_DIR/pgbench-output.log" ]; then
+  # Extract latencies from detailed log (format: timestamp client_id transaction latency status)
+  # pgbench log format with --log flag provides per-transaction latencies
+  echo "Computing latency percentiles from transaction log..."
+  
+  # Note: pgbench with --log creates files like pgbench.0.log, pgbench.1.log, etc.
+  # We need to extract from the pod's log volume
+  kubectl exec pgbench-client-scenario2b -n "${PG_NAMESPACE}" -c pgbench -- \
+    bash -c 'cat /logs/pgbench.*.log 2>/dev/null' > "$OUTPUT_DIR/pgbench-transactions.log" 2>/dev/null || echo "Transaction logs not available in pod"
+  
+  if [ -s "$OUTPUT_DIR/pgbench-transactions.log" ]; then
+    # Extract latency column (4th field) and calculate percentiles
+    awk '{print $4}' "$OUTPUT_DIR/pgbench-transactions.log" | sort -n > "$OUTPUT_DIR/latencies-sorted.txt"
+    
+    TOTAL_TXS=$(wc -l < "$OUTPUT_DIR/latencies-sorted.txt")
+    P50_LINE=$(echo "$TOTAL_TXS * 0.50" | bc | cut -d. -f1)
+    P95_LINE=$(echo "$TOTAL_TXS * 0.95" | bc | cut -d. -f1)
+    P99_LINE=$(echo "$TOTAL_TXS * 0.99" | bc | cut -d. -f1)
+    
+    LATENCY_P50=$(sed -n "${P50_LINE}p" "$OUTPUT_DIR/latencies-sorted.txt")
+    LATENCY_P95=$(sed -n "${P95_LINE}p" "$OUTPUT_DIR/latencies-sorted.txt")
+    LATENCY_P99=$(sed -n "${P99_LINE}p" "$OUTPUT_DIR/latencies-sorted.txt")
+    
+    # Convert microseconds to milliseconds
+    LATENCY_P50_MS=$(echo "scale=2; $LATENCY_P50 / 1000" | bc)
+    LATENCY_P95_MS=$(echo "scale=2; $LATENCY_P95 / 1000" | bc)
+    LATENCY_P99_MS=$(echo "scale=2; $LATENCY_P99 / 1000" | bc)
+    
+    echo ""
+    echo "Latency Percentiles (from $TOTAL_TXS transactions):"
+    echo "  p50 (median):  ${LATENCY_P50_MS} ms"
+    echo "  p95:           ${LATENCY_P95_MS} ms"
+    echo "  p99:           ${LATENCY_P99_MS} ms"
+    echo ""
+    
+    # Target validation (Phase 4 goal: p95 < 100ms)
+    if (( $(echo "$LATENCY_P95_MS < 100" | bc -l) )); then
+      echo "✓ p95 latency target met (< 100ms)"
+    else
+      echo "⚠ p95 latency above target (${LATENCY_P95_MS} ms > 100ms)"
+    fi
+  else
+    echo "⚠ Transaction-level logs not available. Using summary statistics only."
+  fi
+fi
+
+# Phase 4: Failover Time Breakdown
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "            PHASE 4: FAILOVER TIME BREAKDOWN"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Calculate failover phases
+FAILOVER_TRIGGER_EPOCH=$(date -d "$FAILOVER_TIME" +%s)
+FAILOVER_COMPLETE_EPOCH=$(date -d "$FAILOVER_COMPLETE" +%s)
+TOTAL_FAILOVER_SECONDS=$((FAILOVER_COMPLETE_EPOCH - FAILOVER_TRIGGER_EPOCH))
+
+echo "Failover Timeline:"
+echo "  Trigger Time:    $FAILOVER_TIME"
+echo "  Complete Time:   $FAILOVER_COMPLETE"
+echo "  Total Duration:  ${TOTAL_FAILOVER_SECONDS}s"
+echo ""
+
+# Extract CloudNativePG events for detailed breakdown
+echo "CloudNativePG Failover Events:"
+kubectl get events -n "${PG_NAMESPACE}" \
+  --sort-by='.lastTimestamp' \
+  --field-selector involvedObject.name="${CLUSTER_NAME}" \
+  | grep -E "(Switchover|Failover|Primary|Replica|Promoted)" \
+  | tail -10 \
+  | tee "$OUTPUT_DIR/cnpg-events.log" || echo "No CNPG events found"
+
+echo ""
+
+# Target validation (Phase 4 goal: RTO < 18s)
+if [ "$TOTAL_FAILOVER_SECONDS" -lt 18 ]; then
+  echo "✓ Failover RTO target met (< 18s)"
+else
+  echo "⚠ Failover RTO above target (${TOTAL_FAILOVER_SECONDS}s > 18s)"
+fi
+
+# Phase 4: Authentication Recovery Analysis
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "         PHASE 4: AUTHENTICATION RECOVERY ANALYSIS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Extract authentication failures from pgbench log
+AUTH_FAILURES=$(grep -c "authentication failed\|connection refused\|could not connect" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null || echo "0")
+echo "Authentication Failures: $AUTH_FAILURES"
+
+# Estimate auth recovery time from progress logs
+# pgbench outputs progress every 10s, so we can estimate recovery window
+PROGRESS_LINES=$(grep "progress:" "$OUTPUT_DIR/pgbench-output.log" | tail -20)
+echo ""
+echo "Transaction Progress (last 20 intervals):"
+echo "$PROGRESS_LINES" | awk '{print $1, $2, "tps:", $4}' | tail -10
+
+# Find the lowest TPS point (likely during failover) and recovery point
+MIN_TPS=$(echo "$PROGRESS_LINES" | awk '{print $4}' | sort -n | head -1)
+RECOVERY_TPS=$(echo "$PROGRESS_LINES" | awk '{print $4}' | tail -1)
+
+echo ""
+echo "TPS Analysis:"
+echo "  Minimum TPS (during failover): $MIN_TPS"
+echo "  Recovery TPS (post-failover):  $RECOVERY_TPS"
+echo ""
+
+# Phase 1 optimization target: Auth recovery < 5s
+echo "Phase 1 Optimization: PgBouncer server_lifetime=300s, idle_timeout=120s"
+echo "Target: Authentication recovery < 5s"
+echo ""
+
 # Results
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -159,11 +279,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 grep "tps" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null | tail -1 || echo "TPS: See detailed log"
 grep -E "latency (average|stddev)" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null || echo "Latency: See detailed log"
 echo ""
-echo "Failover: $FAILOVER_TIME → $FAILOVER_COMPLETE"
+echo "Failover: $FAILOVER_TIME → $FAILOVER_COMPLETE (${TOTAL_FAILOVER_SECONDS}s)"
 echo "Deleted: $PRIMARY_POD → New: $NEW_PRIMARY"
 echo "Connection: PgBouncer Pooler (transaction mode)"
 echo ""
-diff -u "$OUTPUT_DIR/consistency-pre-failover.txt" "$OUTPUT_DIR/consistency-post-failover.txt" 2>/dev/null || echo "Consistency: Check files"
+diff -u "$OUTPUT_DIR/pre-failover-consistency.log" "$OUTPUT_DIR/post-failover-consistency.log" 2>/dev/null || echo "Consistency: Check log files"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "✓ Results: $OUTPUT_DIR"
