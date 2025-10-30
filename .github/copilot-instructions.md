@@ -31,16 +31,18 @@ This project automates the deployment of a highly available PostgreSQL database 
 ├── config/                  # Configuration files
 │   └── environment-variables.sh    # Bash environment configuration (all parameters)
 ├── scripts/                 # Deployment automation (Azure CLI)
-│   ├── deploy-all.sh                       # Master orchestration (8 steps)
-│   ├── 02-create-infrastructure.sh         # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
-│   ├── 03-configure-workload-identity.sh   # Federated credentials
-│   ├── 04-deploy-cnpg-operator.sh          # Installs CNPG operator
-│   ├── 04a-install-barman-cloud-plugin.sh  # Installs Barman plugin for backups
-│   ├── 04b-install-prometheus-operator.sh  # Installs Prometheus for metrics
-│   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA + PgBouncer + PodMonitor
-│   ├── 06-configure-monitoring.sh          # Configures Grafana + Azure Monitor
-│   ├── 07-display-connection-info.sh       # Shows connection endpoints
-│   └── 08-test-pgbench.sh                  # Load testing tool
+│   ├── deploy-all.sh                           # Master orchestration (8 steps including sub-steps)
+│   ├── 02-create-infrastructure.sh             # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
+│   ├── 03-configure-workload-identity.sh       # Federated credentials
+│   ├── 04-deploy-cnpg-operator.sh              # Installs CNPG operator
+│   ├── 04a-install-barman-cloud-plugin.sh      # Installs Barman plugin for backups
+│   ├── 05-deploy-postgresql-cluster.sh         # Deploys PostgreSQL HA + PgBouncer + PodMonitor
+│   ├── 06-configure-monitoring.sh              # Configures Grafana + Azure Monitor
+│   ├── 06a-configure-azure-monitor-prometheus.sh  # Configures Azure Monitor Prometheus
+│   ├── 07-display-connection-info.sh           # Shows connection endpoints
+│   ├── 07a-run-cluster-validation.sh           # Runs comprehensive validation tests
+│   ├── 08-test-pgbench.sh                      # Load testing tool
+│   └── 08a-test-pgbench-high-load.sh           # High load testing (8K-10K TPS)
 ├── kubernetes/              # Kubernetes manifests
 │   └── postgresql-cluster.yaml  # Reference manifest (NOT used in deployment)
 ├── grafana/                 # Grafana dashboards
@@ -58,6 +60,205 @@ This project automates the deployment of a highly available PostgreSQL database 
     └── VM_SETUP_GUIDE.md               # Load test VM setup
 ```
 
+## Development Environment Setup
+
+### Using DevContainer (Recommended)
+
+This project includes a DevContainer configuration that provides a consistent development environment with all required tools pre-installed:
+
+1. **Open in DevContainer**:
+   - Open project in VS Code
+   - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+   - Select: `Dev Containers: Reopen in Container`
+   - Wait 2-5 minutes for first-time setup
+
+2. **What's Included**:
+   - Azure CLI (latest with aks-preview extension)
+   - kubectl (1.31.0+)
+   - Helm (3.13.0+)
+   - jq, OpenSSL, Git
+   - Port forwarding for PostgreSQL (5432), Grafana (3000)
+
+3. **Inside Container**:
+   ```bash
+   # Verify tools are installed
+   az --version
+   kubectl version --client
+   helm version
+   
+   # Navigate to project
+   cd /workspaces/azure-postgresql-ha-aks-workshop
+   ```
+
+For detailed DevContainer setup, see `.devcontainer/README.md`.
+
+### Manual Setup (Alternative)
+
+If not using DevContainer, ensure you have:
+- Azure CLI 2.56.0+ with aks-preview extension
+- kubectl 1.31.0+
+- Helm 3.13.0+
+- jq 1.7.1+
+- OpenSSL 1.1.1+
+- Bash shell (Linux/macOS/WSL)
+
+## Code Standards
+
+### Required Before Making Changes
+
+1. **Load Environment Variables** (before any script execution):
+   ```bash
+   source config/environment-variables.sh
+   # Or if .env exists:
+   source .env
+   ```
+
+2. **Understand the Script Flow**:
+   - Review `scripts/deploy-all.sh` to understand deployment order
+   - Scripts are numbered and must run in sequence
+   - Each script is idempotent (safe to re-run)
+
+### Script Modification Guidelines
+
+When modifying scripts:
+1. **Preserve `set -euo pipefail`** - Ensures scripts fail fast on errors
+2. **Maintain idempotency** - Scripts should be safe to re-run
+3. **Add logging** - Use echo statements with timestamps for debugging
+4. **Test in isolated environment** - Never test directly in production
+5. **Document changes** - Update script comments and documentation
+
+### Validation Before Committing
+
+Before committing any changes:
+
+1. **Syntax Check** (Bash scripts):
+   ```bash
+   # Check script syntax
+   bash -n scripts/your-modified-script.sh
+   ```
+
+2. **ShellCheck** (if available):
+   ```bash
+   shellcheck scripts/your-modified-script.sh
+   ```
+
+3. **Test Execution** (in test environment):
+   ```bash
+   # Load environment
+   source config/environment-variables.sh
+   
+   # Run the modified script
+   ./scripts/your-modified-script.sh
+   ```
+
+## Development Flow
+
+### Full Deployment
+
+```bash
+# 1. Load environment variables
+source config/environment-variables.sh
+# Or if .env exists:
+source .env
+
+# 2. Deploy complete stack (8 steps: 02, 03, 04, 04a, 05, 06, 06a, 07)
+./scripts/deploy-all.sh
+
+# 3. Verify deployment
+./scripts/07a-run-cluster-validation.sh
+```
+
+### Individual Script Execution
+
+Scripts must be run in order:
+```bash
+# Step 1: Create Azure infrastructure
+./scripts/02-create-infrastructure.sh
+
+# Step 2: Configure workload identity
+./scripts/03-configure-workload-identity.sh
+
+# Step 3: Deploy CNPG operator
+./scripts/04-deploy-cnpg-operator.sh
+
+# Step 4: Install Barman Cloud plugin
+./scripts/04a-install-barman-cloud-plugin.sh
+
+# Step 5: Deploy PostgreSQL cluster
+./scripts/05-deploy-postgresql-cluster.sh
+
+# Step 6: Configure monitoring (Grafana)
+./scripts/06-configure-monitoring.sh
+
+# Step 7: Configure Azure Monitor Prometheus
+./scripts/06a-configure-azure-monitor-prometheus.sh
+
+# Step 8: Display connection info
+./scripts/07-display-connection-info.sh
+```
+
+### Testing & Validation
+
+#### Cluster Validation
+```bash
+# Run comprehensive validation tests
+./scripts/07a-run-cluster-validation.sh
+
+# This validates:
+# - Primary connection (direct)
+# - PgBouncer pooler connection
+# - Data write operations
+# - Read replica connection
+# - Data replication verification
+# - Replication status
+# - Connection pooling
+```
+
+#### Load Testing
+```bash
+# Basic load test (recommended for initial validation)
+./scripts/08-test-pgbench.sh
+
+# High load test (8,000-10,000 TPS target)
+./scripts/08a-test-pgbench-high-load.sh
+```
+
+#### Failover Testing
+```bash
+# Run failover test scenarios
+cd scripts/failover-testing
+
+# Available scenarios:
+./scenario-1a-aks-direct-manual.sh      # Manual failover with direct connection
+./scenario-1b-aks-direct-simulated.sh   # Simulated failover with direct connection
+./scenario-2a-aks-pooler-manual.sh      # Manual failover with PgBouncer
+./scenario-2b-aks-pooler-simulated.sh   # Simulated failover with PgBouncer
+
+# Verify data consistency after failover
+./verify-consistency.sh
+
+# See docs/FAILOVER_TESTING.md for detailed procedures
+```
+
+### Monitoring & Debugging
+
+```bash
+# Check cluster status
+kubectl cnpg status pg-primary -n cnpg-database
+
+# View pod logs
+kubectl logs -n cnpg-database <pod-name>
+
+# Check operator logs
+kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
+
+# Port forward to PostgreSQL
+kubectl port-forward svc/pg-primary-rw 5432:5432 -n cnpg-database
+
+# Connect with psql
+psql -h localhost -U app -d appdb
+```
+
 ## Key Files and Their Purposes
 
 ### Environment Configuration (`config/environment-variables.sh`)
@@ -73,11 +274,14 @@ This project automates the deployment of a highly available PostgreSQL database 
 - **03-configure-workload-identity**: Sets up federated credentials for backup access
 - **04-deploy-cnpg-operator**: Installs CloudNativePG via Helm
 - **04a-install-barman-cloud-plugin**: Installs Barman Cloud Plugin v0.8.0
-- **04b-install-prometheus-operator**: Installs Prometheus Operator for PodMonitor support
 - **05-deploy-postgresql-cluster**: Deploys PostgreSQL HA cluster with Premium v2 storage + PgBouncer + PodMonitor
 - **06-configure-monitoring**: Configures Grafana + Azure Monitor integration
+- **06a-configure-azure-monitor-prometheus**: Configures Azure Monitor Prometheus integration
 - **07-display-connection-info**: Shows connection endpoints and credentials
-- **deploy-all**: Master orchestration script (8 steps: 2, 3, 4, 4a, 4b, 5, 6, 7)
+- **07a-run-cluster-validation**: Runs comprehensive validation tests
+- **08-test-pgbench**: Basic load testing (pgbench)
+- **08a-test-pgbench-high-load**: High load testing (8K-10K TPS target)
+- **deploy-all**: Master orchestration script (8 steps: 2, 3, 4, 4a, 5, 6, 6a, 7)
 - Bash scripts only (DevContainer runs on Linux)
 
 ### Kubernetes Manifests (`kubernetes/postgresql-cluster.yaml`)
@@ -118,7 +322,7 @@ This project automates the deployment of a highly available PostgreSQL database 
 # Load environment variables
 source config/environment-variables.sh
 
-# Deploy all components (6 automated steps)
+# Deploy all components (8 automated steps)
 ./scripts/deploy-all.sh
 ```
 
