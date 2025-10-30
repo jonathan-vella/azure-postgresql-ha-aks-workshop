@@ -96,6 +96,7 @@ spec:
       until pg_isready -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME}; do sleep 1; done
       echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
       pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=prepared \
+        --max-tries=3 \
         --file=/workload/payment-gateway-workload.sql --time=300 \
         -c 100 -j 4 \
         --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log

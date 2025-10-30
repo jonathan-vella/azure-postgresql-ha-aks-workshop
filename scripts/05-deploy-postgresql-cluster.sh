@@ -278,11 +278,11 @@ spec:
       reserve_pool_timeout: "3"
       max_db_connections: "500"
       max_user_connections: "500"
-      # Phase 2 Optimization: Production failover resilience
+      # Phase 3 Optimization: Enhanced auth recovery for failover resilience
       # Authentication recovery optimization - prevent cache poisoning during failover
       server_lifetime: "3600"             # 1 hour (from 120s) - reduce connection churn
       server_idle_timeout: "600"          # 10 minutes (from 60s) - keep connections alive longer
-      server_login_retry: "5"             # Retry failed auth attempts (NEW - critical for failover)
+      server_login_retry: "15"            # 15 retries (from 5) - match PgBouncer default, handle all clients
       # Connection establishment and health checks
       server_connect_timeout: "10"        # 10s (from 5s) - more tolerant during failover
       server_check_delay: "10"            # Health check interval for failure detection
