@@ -322,7 +322,7 @@ psql -h localhost -U app -d appdb
 # Load environment variables
 source config/environment-variables.sh
 
-# Deploy all components (6 automated steps)
+# Deploy all components (8 automated steps)
 ./scripts/deploy-all.sh
 ```
 
