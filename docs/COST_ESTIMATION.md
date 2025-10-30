@@ -52,9 +52,12 @@
 |---------|--------------|-------------|---------------------|
 | **Azure Monitor - Log Analytics** | 10GB ingestion/day | ~$0.04 | ~$30 |
 | **Azure Managed Grafana** | Standard tier | ~$0.31 | ~$226 |
-| **Prometheus Operator** | Runs on AKS (no extra charge) | $0.00 | $0.00 |
+| **Container Insights** | Included with Log Analytics | $0.00 | $0.00 |
+| **Azure Monitor Managed Prometheus** | Included with Azure Monitor workspace | $0.00 | $0.00 |
 
 **Subtotal Monitoring**: ~$0.35/hour | ~$256/month
+
+**Note**: All monitoring is Azure-native. No external Prometheus installation required - Azure Monitor provides Prometheus-compatible metrics and PodMonitor CRD support.
 
 ---
 

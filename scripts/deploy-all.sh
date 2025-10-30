@@ -18,7 +18,7 @@ echo "================================================"
 echo ""
 
 # Load environment variables
-echo "Step 1/7: Loading environment variables..."
+echo "Step 1/8: Loading environment variables..."
 if [ -f "${SCRIPT_DIR}/../.env" ]; then
     source "${SCRIPT_DIR}/../.env"
 else
@@ -49,45 +49,51 @@ echo -e "${GREEN}✓ All prerequisites validated${NC}"
 echo ""
 
 # Step 2: Create infrastructure
-echo "Step 2/7: Creating Azure infrastructure..."
+echo "Step 2/8: Creating Azure infrastructure..."
 "${SCRIPT_DIR}/02-create-infrastructure.sh"
 echo -e "${GREEN}✓ Infrastructure created${NC}"
 echo ""
 
 # Step 3: Configure Workload Identity
-echo "Step 3/7: Configuring Workload Identity..."
+echo "Step 3/8: Configuring Workload Identity..."
 "${SCRIPT_DIR}/03-configure-workload-identity.sh"
 echo -e "${GREEN}✓ Workload Identity configured${NC}"
 echo ""
 
 # Step 4: Deploy CNPG operator
-echo "Step 4/7: Deploying CloudNativePG operator..."
+echo "Step 4/8: Deploying CloudNativePG operator..."
 "${SCRIPT_DIR}/04-deploy-cnpg-operator.sh"
 echo -e "${GREEN}✓ CNPG operator deployed${NC}"
 echo ""
 
 # Step 4a: Install Barman Cloud Plugin
-echo "Step 4a/7: Installing Barman Cloud Plugin..."
+echo "Step 4a/8: Installing Barman Cloud Plugin..."
 "${SCRIPT_DIR}/04a-install-barman-cloud-plugin.sh"
 echo -e "${GREEN}✓ Barman Cloud Plugin installed${NC}"
 echo ""
 
-# Step 4b: Install Prometheus Operator
-echo "Step 4b/7: Installing Prometheus Operator..."
-"${SCRIPT_DIR}/04b-install-prometheus-operator.sh"
-echo -e "${GREEN}✓ Prometheus Operator installed${NC}"
-echo ""
-
 # Step 5: Deploy PostgreSQL cluster
-echo "Step 5/7: Deploying PostgreSQL HA cluster..."
+echo "Step 5/8: Deploying PostgreSQL HA cluster..."
 "${SCRIPT_DIR}/05-deploy-postgresql-cluster.sh"
 echo -e "${GREEN}✓ PostgreSQL cluster deployed${NC}"
 echo ""
 
-# Step 6: Configure monitoring
-echo "Step 6/7: Configuring monitoring..."
+# Step 6: Configure monitoring (Grafana)
+echo "Step 6/8: Configuring Grafana monitoring..."
 "${SCRIPT_DIR}/06-configure-monitoring.sh"
-echo -e "${GREEN}✓ Monitoring configured${NC}"
+echo -e "${GREEN}✓ Grafana monitoring configured${NC}"
+echo ""
+
+# Step 6a: Configure Azure Monitor Managed Prometheus
+echo "Step 6a/8: Configuring Azure Monitor Managed Prometheus..."
+"${SCRIPT_DIR}/06a-configure-azure-monitor-prometheus.sh"
+echo -e "${GREEN}✓ Azure Monitor Managed Prometheus configured${NC}"
+echo ""
+
+# Step 7: Display connection information
+echo "Step 7/8: Displaying connection information..."
+"${SCRIPT_DIR}/07-display-connection-info.sh"
+echo -e "${GREEN}✓ Connection information displayed${NC}"
 echo ""
 
 # Deployment summary

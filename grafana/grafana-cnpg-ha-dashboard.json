@@ -3,8 +3,7 @@
     "list": [
       {
         "datasource": {
-          "type": "prometheus",
-          "uid": "amw-cnpg-987kr2cs"
+          "type": "prometheus"
         },
         "enable": true,
         "expr": "changes(cnpg_collector_up{pg_cluster=\"$pg_cluster\", role=\"primary\"}[1m]) > 0",
@@ -25,8 +24,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Current status of all PostgreSQL instances in the cluster",
       "fieldConfig": {
@@ -93,8 +91,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_collector_up{pg_cluster=\"$pg_cluster\"}",
           "legendFormat": "{{pod}} ({{role}})",
@@ -106,8 +103,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Which pod is currently serving as the primary instance",
       "fieldConfig": {
@@ -157,8 +153,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_collector_up{pg_cluster=\"$pg_cluster\", role=\"primary\"}",
           "legendFormat": "{{pod}}",
@@ -170,8 +165,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Number of instances currently healthy",
       "fieldConfig": {
@@ -230,8 +224,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "count(cnpg_collector_up{pg_cluster=\"$pg_cluster\"} == 1)",
           "legendFormat": "Healthy Instances",
@@ -243,8 +236,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Transaction rate (commits + rollbacks) per second. Uses $__rate_interval for adaptive time window: zoomed view (5m) = 15s rate, wider view (1h+) = 1m+ rate. Better spike detection during load tests.",
       "fieldConfig": {
@@ -323,8 +315,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "sum by (pod, role) (rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[$__rate_interval]) or rate(cnpg_pg_stat_database_xact_commit{pg_cluster=\"$pg_cluster\"}[$__rate_interval])*0)",
           "legendFormat": "{{pod}} ({{role}})",
@@ -336,8 +327,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Replication lag in seconds for each replica - KEY FAILOVER METRIC",
       "fieldConfig": {
@@ -424,8 +414,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_pg_replication_lag{pg_cluster=\"$pg_cluster\", role=\"replica\"}",
           "legendFormat": "{{pod}}",
@@ -437,8 +426,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Active database connections by instance - KEY LOAD TEST METRIC",
       "fieldConfig": {
@@ -517,8 +505,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_backends_total{pg_cluster=\"$pg_cluster\"}",
           "legendFormat": "{{pod}} ({{role}})",
@@ -530,8 +517,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "WAL archiving status - Shows count of WAL files ready to archive (0 = OK)",
       "fieldConfig": {
@@ -605,8 +591,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_collector_pg_wal_archive_status{pg_cluster=\"$pg_cluster\", value=\"ready\"}",
           "legendFormat": "{{pod}}",
@@ -618,8 +603,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Database size growth over time",
       "fieldConfig": {
@@ -696,8 +680,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_pg_database_size_bytes{pg_cluster=\"$pg_cluster\"}",
           "legendFormat": "{{datname}} on {{pod}}",
@@ -709,8 +692,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "amw-cnpg-987kr2cs"
+        "type": "prometheus"
       },
       "description": "Sync replicas in 'sync' state (Note: Shows 0 when using method=any/quorum mode, which is normal. Check pg_stat_replication for actual sync_state='quorum')",
       "fieldConfig": {
@@ -781,8 +763,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "amw-cnpg-987kr2cs"
+            "type": "prometheus"
           },
           "expr": "cnpg_collector_sync_replicas{pg_cluster=\"$pg_cluster\", role=\"primary\"}",
           "legendFormat": "Sync Replicas",
@@ -812,8 +793,7 @@
           "value": "pg-primary-cnpg-987kr2cs"
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "amw-cnpg-987kr2cs"
+          "type": "prometheus"
         },
         "definition": "label_values(cnpg_collector_up, pg_cluster)",
         "hide": 0,

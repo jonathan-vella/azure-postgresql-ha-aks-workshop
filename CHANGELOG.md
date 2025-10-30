@@ -47,14 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Automation Scripts
 - `deploy-all.sh` - Master orchestration (8 steps)
-- `02-create-infrastructure.sh` - Azure resources
+- `02-create-infrastructure.sh` - Azure resources + Container Insights
 - `03-configure-workload-identity.sh` - Federated credentials
 - `04-deploy-cnpg-operator.sh` - CNPG operator
 - `04a-install-barman-cloud-plugin.sh` - Barman Cloud Plugin v0.8.0
-- `04b-install-prometheus-operator.sh` - Prometheus Operator
-- `05-deploy-postgresql-cluster.sh` - PostgreSQL cluster + PgBouncer
-- `06-configure-monitoring.sh` - Grafana + Azure Monitor
+- `05-deploy-postgresql-cluster.sh` - PostgreSQL cluster + PgBouncer + PodMonitor
+- `06-configure-monitoring.sh` - Azure Managed Grafana
+- `06a-configure-azure-monitor-prometheus.sh` - Azure Monitor Managed Prometheus
 - `07-display-connection-info.sh` - Connection info
+- `07a-validate-cluster.sh` - Comprehensive validation (20+ tests)
 
 #### Documentation
 - README.md - Main project documentation

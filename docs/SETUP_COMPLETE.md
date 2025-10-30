@@ -17,15 +17,16 @@ azure-postgresql-ha-aks-workshop/
 ├── config/
 │   └── environment-variables.sh       # Environment configuration (loaded by scripts)
 ├── scripts/
-│   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
+│   ├── 02-create-infrastructure.sh    # Creates Azure resources (RG, AKS, Storage, Identity, Container Insights, Bastion, NAT Gateway)
 │   ├── 03-configure-workload-identity.sh # Federated credentials setup
 │   ├── 04-deploy-cnpg-operator.sh     # Installs CNPG operator via Helm
 │   ├── 04a-install-barman-cloud-plugin.sh # Installs Barman Cloud Plugin v0.8.0
-│   ├── 04b-install-prometheus-operator.sh # Installs Prometheus Operator for metrics
 │   ├── 05-deploy-postgresql-cluster.sh # Deploys PostgreSQL HA cluster + PgBouncer + PodMonitor
-│   ├── 06-configure-monitoring.sh     # Configures Azure Monitor + Grafana
+│   ├── 06-configure-monitoring.sh     # Configures Azure Managed Grafana
+│   ├── 06a-configure-azure-monitor-prometheus.sh # Configures Azure Monitor Managed Prometheus
 │   ├── 07-display-connection-info.sh  # Displays connection endpoints and credentials
-│   ├── deploy-all.sh                  # ⭐ Master orchestration script (8 steps: 2, 3, 4, 4a, 4b, 5, 6, 7)
+│   ├── 07a-validate-cluster.sh        # Comprehensive cluster validation (20+ tests)
+│   ├── deploy-all.sh                  # ⭐ Master orchestration script (8 steps: 2, 3, 4, 4a, 5, 6, 6a, 7)
 │   └── setup-prerequisites.sh         # Installs required tools
 ├── kubernetes/
 │   ├── postgresql-cluster.yaml        # Reference manifest (not directly used)
@@ -42,10 +43,13 @@ azure-postgresql-ha-aks-workshop/
 - **`config/environment-variables.sh`**: Template loaded by deployment scripts
 - **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 8 deployment steps
 - **Scripts 02-07**: Individual deployment phases using Azure CLI and Helm
+- **Script 02**: Creates Azure infrastructure including Container Insights for pod/node monitoring
 - **Script 04a**: Installs Barman Cloud Plugin v0.8.0 (required for backup/restore operations)
-- **Script 04b**: Installs Prometheus Operator (provides PodMonitor CRD for metrics collection)
-- **Script 05**: Deploys PostgreSQL cluster and configures it to use the Barman Cloud Plugin + PodMonitor
+- **Script 05**: Deploys PostgreSQL cluster with PodMonitor (Azure Monitor provides PodMonitor CRD natively)
+- **Script 06**: Configures Azure Managed Grafana
+- **Script 06a**: Configures Azure Monitor Managed Prometheus scraping
 - **Script 07**: Displays connection information (direct PostgreSQL and PgBouncer pooler endpoints)
+- **Script 07a**: Comprehensive validation (connectivity, replication, HA, pooler, backups, monitoring)
 
 ## 🔄 Deployment Flow
 

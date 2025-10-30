@@ -240,6 +240,8 @@ az aks create \
     --min-count 2 \
     --max-count 3 \
     --node-vm-size "$SYSTEM_NODE_POOL_VMSKU" \
+    --enable-addons monitoring \
+    --workspace-resource-id "$ALA_RESOURCE_ID" \
     --enable-azure-monitor-metrics \
     --azure-monitor-workspace-resource-id "$AMW_RESOURCE_ID" \
     --grafana-resource-id "$GRAFANA_RESOURCE_ID" \

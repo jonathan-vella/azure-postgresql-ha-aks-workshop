@@ -250,13 +250,13 @@ config/
 ### 🚀 Deployment Scripts
 ```
 scripts/
-├── 02-create-infrastructure.sh         - Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
+├── 02-create-infrastructure.sh         - Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway, Container Insights)
 ├── 03-configure-workload-identity.sh   - Sets up federated credentials
 ├── 04-deploy-cnpg-operator.sh          - Installs CloudNativePG operator via Helm
 ├── 04a-install-barman-cloud-plugin.sh  - Installs Barman Cloud Plugin for backup/restore
-├── 04b-install-prometheus-operator.sh  - Installs Prometheus Operator for metrics collection
 ├── 05-deploy-postgresql-cluster.sh     - Deploys PostgreSQL cluster + PgBouncer pooler + PodMonitor
-├── 06-configure-monitoring.sh          - Configures Grafana + Azure Monitor
+├── 06-configure-monitoring.sh          - Configures Azure Managed Grafana
+├── 06a-configure-azure-monitor-prometheus.sh - Configures Azure Monitor Managed Prometheus
 ├── 07-display-connection-info.sh       - Displays connection endpoints and credentials
 ├── 07a-validate-cluster.sh             - ⭐ Validates deployment (connectivity, replication, HA)
 └── deploy-all.sh                       - Master orchestration script (8 steps)
@@ -284,14 +284,15 @@ kubernetes/
 │
 ├── 📂 scripts/                         # Deployment automation
 │   ├── deploy-all.sh                   # Master orchestration (8 steps)
-│   ├── 02-create-infrastructure.sh     # Azure resources
+│   ├── 02-create-infrastructure.sh     # Azure resources + Container Insights
 │   ├── 03-configure-workload-identity.sh
 │   ├── 04-deploy-cnpg-operator.sh
 │   ├── 04a-install-barman-cloud-plugin.sh
-│   ├── 04b-install-prometheus-operator.sh
 │   ├── 05-deploy-postgresql-cluster.sh
-│   ├── 06-configure-monitoring.sh
-│   └── 07-display-connection-info.sh
+│   ├── 06-configure-monitoring.sh      # Grafana
+│   ├── 06a-configure-azure-monitor-prometheus.sh # Azure Monitor
+│   ├── 07-display-connection-info.sh
+│   └── 07a-validate-cluster.sh         # Validation
 │
 ├── 📂 kubernetes/                      # K8s manifests
 │   └── postgresql-cluster.yaml         # Reference manifest

@@ -27,13 +27,13 @@ source ../config/environment-variables.sh
 | Script | Purpose | Duration | Dependencies |
 |--------|---------|----------|--------------|
 | **deploy-all.sh** | Master orchestration - runs steps 2-7 | 20-30 min | All scripts below |
-| **02-create-infrastructure.sh** | Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT) | 10-15 min | Azure CLI, environment variables |
+| **02-create-infrastructure.sh** | Creates Azure resources (RG, AKS, Storage, Identity, Container Insights, Bastion, NAT) | 10-15 min | Azure CLI, environment variables |
 | **03-configure-workload-identity.sh** | Sets up federated credentials for backup access | 1-2 min | Script 02 completed |
 | **04-deploy-cnpg-operator.sh** | Installs CloudNativePG operator via Helm | 2-3 min | AKS cluster ready |
 | **04a-install-barman-cloud-plugin.sh** | Installs Barman Cloud Plugin v0.8.0 for backups | 1 min | CNPG operator installed |
-| **04b-install-prometheus-operator.sh** | Installs Prometheus Operator for PodMonitor support | 2-3 min | AKS cluster ready |
 | **05-deploy-postgresql-cluster.sh** | Deploys PostgreSQL HA (3 nodes) + PgBouncer (3 instances) + PodMonitor | 5-10 min | All previous scripts |
-| **06-configure-monitoring.sh** | Configures Grafana + Azure Monitor integration | 2-3 min | Cluster deployed |
+| **06-configure-monitoring.sh** | Configures Azure Managed Grafana | 2-3 min | Cluster deployed |
+| **06a-configure-azure-monitor-prometheus.sh** | Configures Azure Monitor Managed Prometheus scraping | 2-3 min | Cluster deployed |
 | **07-display-connection-info.sh** | Shows connection endpoints and credentials | <1 min | Cluster deployed |
 | **07a-validate-cluster.sh** | **Comprehensive cluster validation (connectivity, replication, HA)** | **2-3 min** | **Cluster deployed** |
 | **08-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
@@ -49,13 +49,13 @@ source ../config/environment-variables.sh
 
 **What it does**:
 1. Validates environment variables are loaded
-2. Runs infrastructure creation (step 2)
+2. Runs infrastructure creation (step 2) - includes Container Insights
 3. Configures workload identity (step 3)
 4. Installs CNPG operator (step 4)
 5. Installs Barman Cloud Plugin (step 4a)
-6. Installs Prometheus Operator (step 4b)
-7. Deploys PostgreSQL cluster (step 5)
-8. Configures monitoring (step 6)
+6. Deploys PostgreSQL cluster (step 5)
+7. Configures Grafana monitoring (step 6)
+8. Configures Azure Monitor Managed Prometheus (step 6a)
 9. Displays connection info (step 7)
 
 **Usage**:
@@ -149,24 +149,6 @@ source ../config/environment-variables.sh
 ```
 
 **Prerequisites**: CNPG operator installed (step 4).
-
----
-
-### `04b-install-prometheus-operator.sh` - Prometheus Operator
-
-**Purpose**: Installs Prometheus Operator for metrics collection via PodMonitor.
-
-**What it does**:
-- Installs Prometheus Operator
-- Enables PodMonitor CRD support
-- Prepares for PostgreSQL metrics collection
-
-**Usage**:
-```bash
-./04b-install-prometheus-operator.sh
-```
-
-**Prerequisites**: AKS cluster ready.
 
 ---
 
@@ -343,15 +325,16 @@ source ../config/environment-variables.sh
 2. deploy-all.sh (orchestrates steps 2-7)
    OR
    Run individually:
-   → 02-create-infrastructure.sh
+   → 02-create-infrastructure.sh (includes Container Insights)
    → 03-configure-workload-identity.sh
    → 04-deploy-cnpg-operator.sh
    → 04a-install-barman-cloud-plugin.sh
-   → 04b-install-prometheus-operator.sh
-   → 05-deploy-postgresql-cluster.sh
-   → 06-configure-monitoring.sh
+   → 05-deploy-postgresql-cluster.sh (creates PodMonitor)
+   → 06-configure-monitoring.sh (Grafana)
+   → 06a-configure-azure-monitor-prometheus.sh (Azure Monitor)
    → 07-display-connection-info.sh
-3. 08-test-pgbench.sh (optional - after deployment)
+3. 07a-validate-cluster.sh (recommended - validates deployment)
+4. 08-test-pgbench.sh (optional - performance testing)
 ```
 
 ---
