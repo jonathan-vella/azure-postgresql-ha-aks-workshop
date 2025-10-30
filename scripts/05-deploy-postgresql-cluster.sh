@@ -275,15 +275,21 @@ spec:
       reserve_pool_timeout: "3"
       max_db_connections: "500"
       max_user_connections: "500"
-      server_idle_timeout: "600"
-      server_lifetime: "3600"
+      # Phase 1 Optimization: Faster failover recovery
+      # Reduced from 600s (10min) to 120s (2min) - forces faster connection refresh
+      server_idle_timeout: "120"
+      # Reduced from 3600s (1hr) to 300s (5min) - critical for auth recovery after failover
+      server_lifetime: "300"
       server_connect_timeout: "5"
+      # Faster health checks for failure detection
+      server_check_delay: "30"
       query_timeout: "0"
       query_wait_timeout: "120"
       client_idle_timeout: "0"
       idle_transaction_timeout: "0"
-      log_connections: "0"
-      log_disconnections: "0"
+      # Enable connection logging for auth recovery troubleshooting
+      log_connections: "1"
+      log_disconnections: "1"
       log_pooler_errors: "1"
       stats_period: "60"
       ignore_startup_parameters: "extra_float_digits"
