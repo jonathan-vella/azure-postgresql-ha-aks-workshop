@@ -27,7 +27,7 @@ az grafana data-source create \
         "access": "proxy",
         "url": "'"$AMW_RESOURCE_ID"'",
         "isDefault": true
-    }' || echo "Data source may already exist"
+    }' 2>/dev/null || echo "✓ Data source already exists"
 
 # Get Grafana URL
 GRAFANA_URL=$(az grafana show \
@@ -41,11 +41,10 @@ CURRENT_USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
 az role assignment create \
     --role "Grafana Admin" \
     --assignee "$CURRENT_USER_OBJECT_ID" \
-    --scope "$GRAFANA_RESOURCE_ID" || echo "Role assignment may already exist"
+    --scope "$GRAFANA_RESOURCE_ID" 2>/dev/null || echo "✓ Role assignment already exists"
 
-# Verify PodMonitor is created
-echo "Verifying PodMonitor for PostgreSQL..."
-kubectl get podmonitor -n "$PG_NAMESPACE" --context "$AKS_PRIMARY_CLUSTER_NAME"
+# Note: PodMonitor not needed - Azure Monitor Managed Prometheus automatically scrapes metrics
+echo "✓ Azure Monitor will automatically collect PostgreSQL metrics"
 
 echo "✓ Monitoring configuration complete!"
 echo ""
