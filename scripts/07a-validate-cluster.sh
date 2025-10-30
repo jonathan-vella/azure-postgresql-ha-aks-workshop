@@ -113,6 +113,34 @@ wait_for_port_forward() {
     return 1
 }
 
+# Ensure port-forward is still active
+ensure_port_forward_active() {
+    local port=$1
+    local service=$2
+    local pid_var=$3
+    
+    # Check if port is responsive
+    if nc -z localhost "$port" 2>/dev/null; then
+        return 0  # Port-forward is active
+    fi
+    
+    # Port-forward is dead, restart it
+    eval "local old_pid=\$$pid_var"
+    if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
+        kill "$old_pid" 2>/dev/null || true
+    fi
+    
+    # Start new port-forward
+    kubectl port-forward "$service" "${port}:5432" -n "$PG_NAMESPACE" --context "$AKS_PRIMARY_CLUSTER_NAME" > "/tmp/pf-${port}.log" 2>&1 &
+    local new_pid=$!
+    eval "$pid_var=$new_pid"
+    PORT_FORWARD_PIDS+=("$new_pid")
+    
+    # Wait for it to be ready
+    sleep 2
+    wait_for_port_forward "$port"
+}
+
 # Execute psql command
 execute_psql() {
     local port=$1
@@ -243,6 +271,9 @@ fi
 # ============================================================================
 print_header "Test 5: Data Write Operations"
 
+# Ensure port-forward is still active
+ensure_port_forward_active 5432 "svc/${PG_PRIMARY_CLUSTER_NAME}-pooler-rw" PF_POOLER_PID
+
 print_test "Creating test table"
 TABLE_NAME="cluster_validation_test_$(date +%s)"
 TEMP_FILES+=("/tmp/test_data.sql")
@@ -286,6 +317,9 @@ fi
 # TEST 6: Synchronous Replication
 # ============================================================================
 print_header "Test 6: Synchronous Replication"
+
+# Ensure port-forward is still active
+ensure_port_forward_active 5432 "svc/${PG_PRIMARY_CLUSTER_NAME}-pooler-rw" PF_POOLER_PID
 
 print_test "Checking replication status from primary"
 SYNC_REPLICA=$(execute_psql 5432 "SELECT application_name FROM pg_stat_replication WHERE sync_state = 'quorum' LIMIT 1")
