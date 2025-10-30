@@ -1,0 +1,86 @@
+# Configuration for the GitHub Actions Labeler
+# This file defines which labels are automatically applied to pull requests
+# based on the files that are modified.
+#
+# For more information, see:
+# https://github.com/actions/labeler
+
+# Documentation changes
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**'
+      - '*.md'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - '00_START_HERE.md'
+
+# Scripts and automation
+scripts:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'scripts/**'
+      - 'scripts/**/*.sh'
+
+# Infrastructure and configuration
+infrastructure:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'config/**'
+      - 'config/**/*.sh'
+      - '.env'
+      - '.env.example'
+
+# Kubernetes manifests
+kubernetes:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'kubernetes/**'
+      - 'kubernetes/**/*.yaml'
+      - 'kubernetes/**/*.yml'
+
+# Monitoring and observability
+monitoring:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'grafana/**'
+      - 'grafana/**/*.json'
+
+# GitHub workflows and CI/CD
+github-actions:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**'
+      - '.github/workflows/**'
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+
+# Development environment
+devcontainer:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.devcontainer/**'
+      - '.devcontainer/**/*.json'
+
+# Dependencies
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'Gemfile*'
+      - 'go.mod'
+      - 'go.sum'
+
+# Images and assets
+assets:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'images/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.gif'
+      - '**/*.svg'
