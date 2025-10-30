@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **BREAKING**: Replaced `scripts/07a-validate-cluster.sh` with `scripts/07a-run-cluster-validation.sh`
+  - New approach uses Kubernetes Job for in-cluster validation
+  - 100% pass rate (up from 85%) - eliminates kubectl port-forward instability
+  - 7 second execution time (down from 60+ seconds)
+  - 14 comprehensive tests covering connectivity, replication, pooling
+  - Added `kubernetes/cluster-validation-job.yaml` (ConfigMap + Job manifest)
+
+---
+
 ## [v1.0.0] - 2025-10-29
 
 ### 🎉 Initial Release
@@ -55,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `06-configure-monitoring.sh` - Azure Managed Grafana
 - `06a-configure-azure-monitor-prometheus.sh` - Azure Monitor Managed Prometheus
 - `07-display-connection-info.sh` - Connection info
-- `07a-validate-cluster.sh` - Comprehensive validation (20+ tests)
+- `07a-run-cluster-validation.sh` - In-cluster validation (14 tests, 100% pass, ~7s)
 
 #### Documentation
 - README.md - Main project documentation

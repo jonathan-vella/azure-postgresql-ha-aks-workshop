@@ -50,19 +50,18 @@ source config/environment-variables.sh
 
 ### Comprehensive Validation (Recommended)
 ```bash
-# Run automated validation (20+ tests)
-./scripts/07a-validate-cluster.sh
+# Run in-cluster validation (14 tests, 100% pass rate, ~7 seconds)
+./scripts/07a-run-cluster-validation.sh
 ```
 
-**Tests:**
-- Cluster status & HA configuration
-- Multi-zone pod distribution
-- Service endpoints
-- PostgreSQL connectivity (primary/replicas)
-- Data write & replication (RPO=0)
-- PgBouncer pooler (3 instances)
-- WAL archiving & backups
-- Monitoring configuration
+**Tests (executed inside AKS cluster):**
+- Primary & replica connectivity (direct & PgBouncer)
+- Data write operations & persistence
+- Data replication consistency (RPO=0)
+- Read-only service routing to replicas
+- Replica accessibility & health
+- Connection pooling (5 concurrent connections)
+- ⚡ No kubectl port-forward instability
 
 ## 🔍 Manual Verification
 

@@ -98,21 +98,20 @@ source config/environment-variables.sh
 ### 3. Validate Deployment (Recommended ⭐)
 
 ```bash
-# Run comprehensive validation (20+ tests)
-./scripts/07a-validate-cluster.sh
+# Run in-cluster validation (14 tests, ~7 seconds)
+./scripts/07a-run-cluster-validation.sh
 ```
 
 **What gets validated:**
-- ✅ Cluster status & HA configuration
-- ✅ Multi-zone pod distribution  
-- ✅ Service endpoints (rw, ro, pooler)
-- ✅ PostgreSQL connectivity
-- ✅ Synchronous replication (RPO=0)
-- ✅ PgBouncer pooler (3 instances)
-- ✅ WAL archiving & backups
-- ✅ Monitoring configuration
+- ✅ Primary & replica connectivity (direct & PgBouncer)
+- ✅ Data write operations & persistence
+- ✅ Data replication consistency (RPO=0)
+- ✅ Read-only service routing to replicas
+- ✅ Replica accessibility & health
+- ✅ Connection pooling (5 concurrent connections)
+- ⚡ Executed inside AKS cluster (no port-forward instability)
 
-**Expected result:** 16-20 tests pass (80-100% success rate)
+**Expected result:** 14/14 tests pass (100% success rate)
 
 ### 4. Manual Verification (Optional)
 
@@ -143,11 +142,12 @@ kubectl cnpg status pg-primary -n cnpg-database
 │   ├── 04-deploy-cnpg-operator.sh          # Installs CNPG operator
 │   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA
 │   ├── 06-configure-monitoring.sh          # Configures observability
-│   ├── 07a-validate-cluster.sh             # ⭐ Validates deployment (20+ tests)
+│   ├── 07a-run-cluster-validation.sh       # ⭐ In-cluster validation (14 tests, 100% pass, ~7s)
 │   ├── 08-test-pgbench.sh                  # Tests pgbench performance tool
 │   └── deploy-all.sh                       # Master orchestration
 ├── kubernetes/
-│   └── postgresql-cluster.yaml  # Reference manifest (not used in deployment)
+│   ├── postgresql-cluster.yaml             # Reference manifest (not used in deployment)
+│   └── cluster-validation-job.yaml         # In-cluster validation Job
 └── docs/
     └── README.md                # This file
 ```

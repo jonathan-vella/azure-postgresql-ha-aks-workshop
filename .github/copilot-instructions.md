@@ -203,6 +203,204 @@ Only create a new document if:
 ✅ No additional documents needed at this time  
 ✅ Focus on code quality, not documentation volume
 
+## Change Tracking & Documentation Update Workflow
+
+**CRITICAL: Always track changes and keep documentation synchronized.**
+
+### Workflow Steps
+
+#### 1. Track Changes During Session
+When making ANY changes to code, scripts, or configuration:
+
+1. **Update `.github/SESSION_CHANGES.md`** immediately with:
+   - Files created/modified/deleted
+   - Purpose and description of changes
+   - Performance impact (if applicable)
+   - Breaking changes (if any)
+   - Which documentation files need updates
+
+2. **Format for SESSION_CHANGES.md**:
+   ```markdown
+   # Session Changes - [DATE]
+   
+   ## Summary
+   Brief description of what was accomplished
+   
+   ---
+   
+   ## Files Created
+   ### 1. path/to/file.ext
+   **Purpose**: What it does
+   **Description**: Detailed explanation
+   **Key Features**: Bullet list
+   
+   ## Files Modified
+   ### 1. path/to/file.ext
+   **Changes**: What changed
+   **Reason**: Why it changed
+   **Impact**: Effect on system
+   
+   ## Files Deleted
+   ### 1. path/to/file.ext
+   **Reason**: Why deleted
+   **Replaced By**: New file/approach (if applicable)
+   
+   ---
+   
+   ## Documentation Updates Needed
+   List all files that reference changed functionality:
+   1. README.md - Section X needs update
+   2. docs/GUIDE.md - Command Y changed
+   etc.
+   
+   ---
+   
+   ## Performance/Behavior Changes
+   - Old behavior: ...
+   - New behavior: ...
+   - Metrics: ...
+   
+   ---
+   
+   ## Migration Notes
+   What users need to know/do
+   
+   ---
+   
+   ## Commit Message Suggestion
+   Suggested commit message following Conventional Commits
+   ```
+
+#### 2. Update Documentation Files
+Once changes are tracked, **before committing**:
+
+1. **Read `.github/SESSION_CHANGES.md`** to identify affected documentation
+2. **Update each documentation file** listed in "Documentation Updates Needed"
+3. **Verify consistency** across all docs (use grep/search to find references)
+4. **Update CHANGELOG.md** with changes following Keep a Changelog format
+
+#### 3. Clear Change Tracker
+After documentation is updated:
+
+1. **Archive the session changes**:
+   ```bash
+   # Move to archive with timestamp
+   mv .github/SESSION_CHANGES.md .github/archive/SESSION_CHANGES_$(date +%Y%m%d_%H%M%S).md
+   ```
+   OR
+   **Clear the file** for next session:
+   ```bash
+   echo "# Session Changes - $(date +%Y-%m-%d)" > .github/SESSION_CHANGES.md
+   echo "" >> .github/SESSION_CHANGES.md
+   echo "No changes tracked yet." >> .github/SESSION_CHANGES.md
+   ```
+
+2. **Commit everything together**:
+   ```bash
+   git add .
+   git commit -m "feat: [description]
+   
+   - Updated scripts/...
+   - Updated docs/...
+   - Cleared SESSION_CHANGES.md after doc sync
+   
+   Closes #issue"
+   ```
+
+#### 4. Validation Checklist
+Before committing, verify:
+
+- [ ] `.github/SESSION_CHANGES.md` has all changes documented
+- [ ] All documentation files listed in SESSION_CHANGES have been updated
+- [ ] No references to old file names remain (use `grep -r "old_name" docs/ README.md`)
+- [ ] No stale information about performance/behavior
+- [ ] CHANGELOG.md updated with user-facing changes
+- [ ] SESSION_CHANGES.md archived or cleared
+- [ ] All files staged for commit
+
+### When to Skip This Workflow
+
+Only skip change tracking for:
+- ❌ Trivial typo fixes in comments
+- ❌ Whitespace-only changes
+- ❌ .env file updates (gitignored)
+- ❌ Temporary debugging code
+
+Always track for:
+- ✅ New scripts or files
+- ✅ Modified scripts or functionality
+- ✅ Deleted/renamed files
+- ✅ Configuration changes
+- ✅ Performance improvements
+- ✅ Bug fixes affecting behavior
+- ✅ Breaking changes
+
+### Tools to Help
+
+```bash
+# Find all references to a changed file/command
+grep -r "old_script_name.sh" docs/ README.md scripts/
+
+# Find specific values that changed (e.g., pass rates)
+grep -r "85%" docs/ README.md
+
+# Check for consistency
+git diff --stat  # See what files changed
+git diff         # Review actual changes
+
+# Validate documentation is in sync
+./scripts/validate-docs.sh  # If available
+```
+
+### Example Session Flow
+
+```
+1. User: "Can we improve the validation script?"
+   → Agent starts working
+   
+2. Agent creates new validation approach
+   → Immediately adds to SESSION_CHANGES.md:
+     - Files Created: scripts/new-validate.sh
+     - Files Deleted: scripts/old-validate.sh
+     - Docs needing update: README.md, docs/QUICK_REFERENCE.md
+   
+3. Agent completes implementation
+   → Updates SESSION_CHANGES.md with results/metrics
+   
+4. Agent asks: "Ready to update documentation?"
+   → User confirms
+   
+5. Agent updates all listed documentation files
+   → Verifies with grep for old references
+   → Updates CHANGELOG.md
+   
+6. Agent archives/clears SESSION_CHANGES.md
+   → Commits everything together
+   
+7. Ready for next change cycle (SESSION_CHANGES.md is clean)
+```
+
+### Benefits of This Workflow
+
+1. ✅ **No documentation drift** - Docs always match code
+2. ✅ **Clear audit trail** - SESSION_CHANGES.md shows what happened
+3. ✅ **Easier code review** - Reviewers see docs were updated
+4. ✅ **Better commit messages** - SESSION_CHANGES guides commit description
+5. ✅ **Prevents forgotten updates** - Checklist catches missed docs
+6. ✅ **Repeatable process** - Works for every change session
+
+### Archive Structure (Optional)
+
+```
+.github/
+├── copilot-instructions.md
+├── SESSION_CHANGES.md          # Current session (active tracking)
+└── archive/
+    ├── SESSION_CHANGES_20251030_140523.md
+    ├── SESSION_CHANGES_20251029_093015.md
+    └── SESSION_CHANGES_20251028_161245.md
+```
+
 ---
 
 ## References

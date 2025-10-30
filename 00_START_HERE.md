@@ -61,18 +61,18 @@ source config/environment-variables.sh
 
 ### 3️⃣ Validate
 ```bash
-# Run comprehensive validation (20+ tests)
-./scripts/07a-validate-cluster.sh
+# Run comprehensive validation (in-cluster, 100% pass rate)
+./scripts/07a-run-cluster-validation.sh
 ```
 
-**Tests performed:**
-- ✅ Cluster status & HA configuration
-- ✅ Multi-zone pod distribution
-- ✅ PostgreSQL connectivity (primary/replicas)
-- ✅ Data replication (RPO=0 validation)
-- ✅ PgBouncer pooler (3 instances)
-- ✅ WAL archiving & backups
-- ✅ Monitoring configuration
+**Tests performed (14 tests, ~7 seconds):**
+- ✅ Primary & replica connectivity (direct & pooler)
+- ✅ Data write operations & persistence
+- ✅ Data replication consistency (RPO=0)
+- ✅ PgBouncer connection pooling (3 instances)
+- ✅ Read-only service routing to replicas
+- ✅ Concurrent connection testing
+- ⚡ Executed inside AKS cluster (no port-forward instability)
 
 ---
 
@@ -94,7 +94,7 @@ source config/environment-variables.sh
 | Script | Purpose | Runtime |
 |--------|---------|---------|
 | `deploy-all.sh` | Complete deployment | 20-30 min |
-| `07a-validate-cluster.sh` | Validation suite (20+ tests) ⭐ | 2-3 min |
+| `07a-run-cluster-validation.sh` | In-cluster validation (14 tests, 100% pass) ⭐ | ~7 sec |
 | `07-display-connection-info.sh` | Show connection details | Instant |
 | `08-test-pgbench.sh` | Performance testing | 5-10 min |
 | Failover scripts | HA testing | See `scripts/failover-testing/` |

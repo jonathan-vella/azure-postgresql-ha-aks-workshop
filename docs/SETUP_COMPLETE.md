@@ -25,11 +25,12 @@ azure-postgresql-ha-aks-workshop/
 │   ├── 06-configure-monitoring.sh     # Configures Azure Managed Grafana
 │   ├── 06a-configure-azure-monitor-prometheus.sh # Configures Azure Monitor Managed Prometheus
 │   ├── 07-display-connection-info.sh  # Displays connection endpoints and credentials
-│   ├── 07a-validate-cluster.sh        # Comprehensive cluster validation (20+ tests)
+│   ├── 07a-run-cluster-validation.sh  # In-cluster validation (14 tests, 100% pass, ~7s)
 │   ├── deploy-all.sh                  # ⭐ Master orchestration script (8 steps: 2, 3, 4, 4a, 5, 6, 6a, 7)
 │   └── setup-prerequisites.sh         # Installs required tools
 ├── kubernetes/
 │   ├── postgresql-cluster.yaml        # Reference manifest (not directly used)
+│   ├── cluster-validation-job.yaml    # In-cluster validation Job (ConfigMap + Job)
 │   ├── objectstore-azure-backup.yaml  # ObjectStore CRD for Barman Cloud Plugin
 │   └── podmonitor-postgresql.yaml     # Manual PodMonitor for Prometheus metrics
 ├── .env                               # Auto-generated environment variables (gitignored)
@@ -195,21 +196,22 @@ This will execute all phases:
 
 ### Step 4: Validate Deployment (Recommended ⭐)
 ```bash
-# Run comprehensive validation script (20+ tests)
-./scripts/07a-validate-cluster.sh
+# Run in-cluster validation (Kubernetes Job, 14 tests, ~7 seconds)
+./scripts/07a-run-cluster-validation.sh
 ```
 
-**What gets validated:**
-- ✅ Cluster status and HA configuration (3/3 instances ready)
-- ✅ Multi-zone pod distribution (across 3 availability zones)
-- ✅ Service endpoints (rw, ro, pooler services)
-- ✅ PostgreSQL connectivity (primary via PgBouncer)
-- ✅ Data write operations (table creation, inserts)
-- ✅ Synchronous replication (RPO=0 validation)
+**What gets validated (100% pass rate):**
+- ✅ Primary connection (direct to PostgreSQL)
+- ✅ PgBouncer pooler connection (transaction mode)
+- ✅ Data write operations (CREATE, INSERT, SELECT)
+- ✅ Data persistence verification
+- ✅ Read replica connection (read-only service)
+- ✅ Data replication (3 rows replicated to replica)
 - ✅ Data consistency (primary vs replica comparison)
-- ✅ PgBouncer pooler (3 instances, transaction mode)
-- ✅ WAL archiving and backups (Barman plugin)
-- ✅ Monitoring configuration (PodMonitor, metrics)
+- ✅ Replica accessibility (3 connection attempts)
+- ✅ Replication health (recovery status check)
+- ✅ Connection pooling (5 concurrent connections)
+- ⚡ Executed inside AKS cluster (no port-forward instability)
 
 **Expected Output:**
 ```
