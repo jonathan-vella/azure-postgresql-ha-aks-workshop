@@ -31,7 +31,7 @@ echo "  Connection: PgBouncer Pooler (${POOLER_SERVICE}:5432)"
 echo "  Failover Type: Simulated (delete primary pod)"
 echo "  Duration: 5 minutes"
 echo "  Failover Trigger: 2:30 mark"
-echo "  Target TPS: 4000+"
+echo "  Target TPS: 10000+"
 echo "  Cluster: ${CLUSTER_NAME}"
 echo ""
 echo "Output Directory: $OUTPUT_DIR"
@@ -81,7 +81,7 @@ spec:
       until pg_isready -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME}; do sleep 1; done
       echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
       pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=simple \
-        --file=/workload/payment-gateway-workload.sql --rate=4000 --time=300 \
+        --file=/workload/payment-gateway-workload.sql --rate=10000 --time=300 \
         --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
       echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
     env:
