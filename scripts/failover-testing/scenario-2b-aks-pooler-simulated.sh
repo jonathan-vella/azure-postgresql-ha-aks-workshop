@@ -98,7 +98,7 @@ spec:
       pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=prepared \
         --max-tries=3 \
         --file=/workload/payment-gateway-workload.sql --time=300 \
-        -c 100 -j 4 \
+        -c 30 -j 4 \
         --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
       echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
     env:

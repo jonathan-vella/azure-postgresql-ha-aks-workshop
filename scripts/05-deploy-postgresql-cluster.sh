@@ -278,7 +278,7 @@ spec:
       reserve_pool_timeout: "3"
       max_db_connections: "500"
       max_user_connections: "500"
-      # Phase 3 Optimization: Enhanced auth recovery for failover resilience
+      # Phase 4 Optimization: Reduced client load (30 vs 100) to reduce auth_query failures
       # Authentication recovery optimization - prevent cache poisoning during failover
       server_lifetime: "3600"             # 1 hour (from 120s) - reduce connection churn
       server_idle_timeout: "600"          # 10 minutes (from 60s) - keep connections alive longer
@@ -286,7 +286,7 @@ spec:
       # Connection establishment and health checks
       server_connect_timeout: "10"        # 10s (from 5s) - more tolerant during failover
       server_check_delay: "10"            # Health check interval for failure detection
-      server_check_query: "SELECT 1"      # Simple health check query (NEW)
+      server_check_query: "SELECT 1"      # Simple health check query
       # Query timeouts - balanced for application workloads
       query_timeout: "0"                  # Disable query timeout (application controls)
       query_wait_timeout: "120"           # 2 minutes (from 300s) - faster queue timeout
