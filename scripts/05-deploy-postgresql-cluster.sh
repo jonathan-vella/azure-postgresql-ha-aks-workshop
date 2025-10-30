@@ -17,6 +17,8 @@ echo "=== Deploying PostgreSQL HA Cluster ==="
 
 # Create Premium SSD v2 storage class
 echo "Creating Premium SSD v2 storage class..."
+# Delete if exists (StorageClass parameters are immutable)
+kubectl delete storageclass "${STORAGECLASS_NAME}" --ignore-not-found=true --context "$AKS_PRIMARY_CLUSTER_NAME"
 kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -f - <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
