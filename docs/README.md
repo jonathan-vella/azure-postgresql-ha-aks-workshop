@@ -144,7 +144,7 @@ kubectl cnpg status pg-primary -n cnpg-database
 │   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA
 │   ├── 06-configure-monitoring.sh          # Configures observability
 │   ├── 07a-validate-cluster.sh             # ⭐ Validates deployment (20+ tests)
-│   ├── 07-test-pgbench.sh                  # Tests pgbench performance tool
+│   ├── 08-test-pgbench.sh                  # Tests pgbench performance tool
 │   └── deploy-all.sh                       # Master orchestration
 ├── kubernetes/
 │   └── postgresql-cluster.yaml  # Reference manifest (not used in deployment)

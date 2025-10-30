@@ -40,7 +40,7 @@ This project automates the deployment of a highly available PostgreSQL database 
 │   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA + PgBouncer + PodMonitor
 │   ├── 06-configure-monitoring.sh          # Configures Grafana + Azure Monitor
 │   ├── 07-display-connection-info.sh       # Shows connection endpoints
-│   └── 07-test-pgbench.sh                  # Load testing tool
+│   └── 08-test-pgbench.sh                  # Load testing tool
 ├── kubernetes/              # Kubernetes manifests
 │   └── postgresql-cluster.yaml  # Reference manifest (NOT used in deployment)
 ├── grafana/                 # Grafana dashboards

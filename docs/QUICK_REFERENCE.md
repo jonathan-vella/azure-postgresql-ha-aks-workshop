@@ -17,7 +17,7 @@ Your command cheat sheet for PostgreSQL HA on AKS operations.
 | `scripts/deploy-all.sh` | Master deployment orchestration |
 | `scripts/02-create-infrastructure.sh` | Creates Azure resources |
 | `scripts/05-deploy-postgresql-cluster.sh` | Deploys PostgreSQL HA cluster |
-| `scripts/07-test-pgbench.sh` | Tests pgbench performance tool |
+| `scripts/08-test-pgbench.sh` | Tests pgbench performance tool |
 | `kubernetes/postgresql-cluster.yaml` | Reference manifest (not used in deployment) |
 
 ## 🚀 Quick Start Commands
@@ -192,7 +192,7 @@ kubectl exec -it -n cnpg-database <pooler-pod> -- \
 
 ### Test Performance
 ```bash
-./scripts/07-test-pgbench.sh
+./scripts/08-test-pgbench.sh
 ```
 
 ### Create Manual Backup

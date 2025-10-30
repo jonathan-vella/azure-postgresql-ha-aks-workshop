@@ -342,7 +342,7 @@ kubernetes/
 2. Test PostgreSQL connection
 3. Verify backups to storage
 4. Access Grafana dashboard
-5. Run pgbench test: `./scripts/07-test-pgbench.sh`
+5. Run pgbench test: `./scripts/08-test-pgbench.sh`
 
 ### Phase 5: Operation (Ongoing)
 1. Monitor cluster metrics
@@ -611,7 +611,7 @@ kubectl get pvc -n cnpg-database
 az storage blob list --account-name <account> --container-name backups
 
 # Test performance
-./scripts/07-test-pgbench.sh
+./scripts/08-test-pgbench.sh
 ```
 
 ### Common Issues

@@ -36,7 +36,7 @@ source ../config/environment-variables.sh
 | **06-configure-monitoring.sh** | Configures Grafana + Azure Monitor integration | 2-3 min | Cluster deployed |
 | **07-display-connection-info.sh** | Shows connection endpoints and credentials | <1 min | Cluster deployed |
 | **07a-validate-cluster.sh** | **Comprehensive cluster validation (connectivity, replication, HA)** | **2-3 min** | **Cluster deployed** |
-| **07-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
+| **08-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
 | **setup-prerequisites.sh** | Installs required tools (az, kubectl, helm, etc.) | 5-10 min | None (run first) |
 
 ---
@@ -286,7 +286,7 @@ source ../config/environment-variables.sh
 
 ---
 
-### `07-test-pgbench.sh` - Load Testing
+### `08-test-pgbench.sh` - Load Testing
 
 **Purpose**: Runs pgbench performance test against PostgreSQL.
 
@@ -299,10 +299,10 @@ source ../config/environment-variables.sh
 **Usage**:
 ```bash
 # Quick test (5 clients, 1000 transactions each)
-./07-test-pgbench.sh
+./08-test-pgbench.sh
 
 # Custom test
-./07-test-pgbench.sh --clients 10 --duration 120
+./08-test-pgbench.sh --clients 10 --duration 120
 ```
 
 **Prerequisites**: Cluster deployed.
@@ -351,7 +351,7 @@ source ../config/environment-variables.sh
    → 05-deploy-postgresql-cluster.sh
    → 06-configure-monitoring.sh
    → 07-display-connection-info.sh
-3. 07-test-pgbench.sh (optional - after deployment)
+3. 08-test-pgbench.sh (optional - after deployment)
 ```
 
 ---

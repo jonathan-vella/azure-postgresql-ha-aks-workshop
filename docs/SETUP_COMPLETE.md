@@ -256,7 +256,7 @@ psql -h localhost -p 5433 -U app -d appdb
 ### Step 7: Run Performance Tests
 ```bash
 # Run comprehensive pgbench test (tests both direct and pooler)
-./scripts/07-test-pgbench.sh
+./scripts/08-test-pgbench.sh
 
 # Expected output:
 # - Phase 1: Connection verification (both endpoints)
@@ -548,7 +548,7 @@ After deployment, verify:
 8. **Run Performance Tests**:
    ```bash
    # Comprehensive test (direct + pooler)
-   ./scripts/07-test-pgbench.sh
+   ./scripts/08-test-pgbench.sh
    ```
 
 9. **Access Monitoring** (Grafana URL displayed after deployment):

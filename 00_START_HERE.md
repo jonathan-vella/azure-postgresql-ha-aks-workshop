@@ -96,7 +96,7 @@ source config/environment-variables.sh
 | `deploy-all.sh` | Complete deployment | 20-30 min |
 | `07a-validate-cluster.sh` | Validation suite (20+ tests) ⭐ | 2-3 min |
 | `07-display-connection-info.sh` | Show connection details | Instant |
-| `07-test-pgbench.sh` | Performance testing | 5-10 min |
+| `08-test-pgbench.sh` | Performance testing | 5-10 min |
 | Failover scripts | HA testing | See `scripts/failover-testing/` |
 
 ---
@@ -106,7 +106,7 @@ source config/environment-variables.sh
 ### After Deployment
 1. **Review Metrics**: Access Grafana dashboard for real-time metrics
 2. **Test Failover**: Follow `docs/FAILOVER_TESTING.md` for HA validation
-3. **Performance Test**: Run `./scripts/07-test-pgbench.sh` for load testing
+3. **Performance Test**: Run `./scripts/08-test-pgbench.sh` for load testing
 4. **Monitor Costs**: Set up Azure cost alerts (see `docs/COST_ESTIMATION.md`)
 
 ### Production Considerations
