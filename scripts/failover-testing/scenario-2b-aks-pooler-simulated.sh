@@ -51,6 +51,15 @@ export PGPASSWORD=$(kubectl get secret "${APP_SECRET}" -n "${PG_NAMESPACE}" -o j
 echo "✓ Prerequisites validated"
 echo ""
 
+# Clean up any existing test pod from previous runs
+if kubectl get pod pgbench-client-scenario2b -n "${PG_NAMESPACE}" &>/dev/null; then
+  echo "🧹 Cleaning up existing test pod from previous run..."
+  kubectl delete pod pgbench-client-scenario2b -n "${PG_NAMESPACE}" --force --grace-period=0 &>/dev/null || true
+  sleep 3
+  echo "✓ Cleanup complete"
+  echo ""
+fi
+
 # Pre-failover consistency (run from inside cluster)
 echo "━━━ Pre-Failover Consistency Check ━━━"
 kubectl run consistency-check-pre --rm -i --restart=Never --image=postgres:17 -n "${PG_NAMESPACE}" \

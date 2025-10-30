@@ -41,6 +41,15 @@ echo "✓ Cluster found: pg-primary"
 echo "✓ Password retrieved"
 echo ""
 
+# Clean up any existing test pod from previous runs
+if kubectl get pod pgbench-client-scenario1b -n cnpg-database &>/dev/null; then
+  echo "🧹 Cleaning up existing test pod from previous run..."
+  kubectl delete pod pgbench-client-scenario1b -n cnpg-database --force --grace-period=0 &>/dev/null || true
+  sleep 3
+  echo "✓ Cleanup complete"
+  echo ""
+fi
+
 # Pre-failover consistency check
 echo "━━━ Pre-Failover Consistency Check ━━━"
 bash "$SCRIPT_DIR/verify-consistency.sh" "pg-primary-rw" "app" "appdb" "pre-failover" "$OUTPUT_DIR"
