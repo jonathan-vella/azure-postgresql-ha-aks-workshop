@@ -35,6 +35,7 @@ source ../config/environment-variables.sh
 | **05-deploy-postgresql-cluster.sh** | Deploys PostgreSQL HA (3 nodes) + PgBouncer (3 instances) + PodMonitor | 5-10 min | All previous scripts |
 | **06-configure-monitoring.sh** | Configures Grafana + Azure Monitor integration | 2-3 min | Cluster deployed |
 | **07-display-connection-info.sh** | Shows connection endpoints and credentials | <1 min | Cluster deployed |
+| **07a-validate-cluster.sh** | **Comprehensive cluster validation (connectivity, replication, HA)** | **2-3 min** | **Cluster deployed** |
 | **07-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
 | **setup-prerequisites.sh** | Installs required tools (az, kubectl, helm, etc.) | 5-10 min | None (run first) |
 
@@ -241,6 +242,47 @@ source ../config/environment-variables.sh
 ```
 
 **Prerequisites**: Cluster deployed.
+
+---
+
+### `07a-validate-cluster.sh` - Cluster Validation ⭐
+
+**Purpose**: Comprehensive validation of PostgreSQL HA cluster deployment.
+
+**What it tests**:
+1. **Cluster Status**: Ready state, instance counts, HA configuration
+2. **Multi-Zone Distribution**: Pods spread across 3 availability zones
+3. **Service Endpoints**: All required services (rw, ro, pooler)
+4. **Primary Connection**: PgBouncer pooler connectivity
+5. **Data Write Operations**: Create table, insert data, verify persistence
+6. **Synchronous Replication**: Data consistency, RPO=0 validation
+7. **PgBouncer Pooler**: 3 instances, readiness checks
+8. **WAL Archiving**: Backup plugin status, archival health
+9. **Monitoring**: PodMonitor and metrics endpoint verification
+10. **Cleanup**: Test data removal
+
+**Usage**:
+```bash
+source ../config/environment-variables.sh
+./07a-validate-cluster.sh
+```
+
+**Output**:
+- ✅ **Pass**: Test succeeded
+- ❌ **Fail**: Test failed (requires action)
+- ⚠️ **Warn**: Non-critical issue detected
+
+**Success Criteria**:
+- All 3 PostgreSQL instances ready
+- Pods distributed across zones
+- Primary and replica connections verified
+- Data replication confirmed (RPO=0)
+- PgBouncer pooler operational
+- WAL archiving active
+
+**Prerequisites**: Cluster deployed (step 5).
+
+**Recommended**: Run after deployment to validate all components.
 
 ---
 
