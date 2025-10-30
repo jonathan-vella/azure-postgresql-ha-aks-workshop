@@ -108,10 +108,6 @@ spec:
   stopDelay: 3                                   # Reduced from 5s - faster pod shutdown
   switchoverDelay: 3                             # Reduced from 5s - faster planned switchover
   
-  # Faster health checks for quick failure detection
-  livenessProbeTimeout: 3                        # Liveness probe timeout in seconds (from 30s)
-  readinessProbeTimeout: 3                       # Readiness probe timeout in seconds (from 30s)
-  
   smartShutdownTimeout: 5                        # Reduced from 10s - faster graceful shutdown
   
   postgresql:
@@ -221,8 +217,7 @@ spec:
     parameters:
       barmanObjectName: azure-backup-store
   
-  # PgBouncer connection pooler for high-concurrency workloads
-  # Native CNPG pooler (not sidecar) - deployed as separate service
+  # Managed roles for database access
   managed:
     roles:
     - name: app
@@ -230,52 +225,6 @@ spec:
       login: true
       passwordSecret:
         name: pg-app-secret
-    - name: pooler
-      ensure: present
-      login: true
-      passwordSecret:
-        name: pg-pooler-secret
-  
-  pooler:
-    instances: 3                                 # HA deployment across zones
-    type: rw                                     # Read-write connections only
-    pgbouncer:
-      poolMode: transaction                      # Transaction pooling for max efficiency
-      parameters:
-        max_client_conn: "10000"                 # Support 10K concurrent client connections
-        default_pool_size: "25"                  # Pool size per user/database (25 × 500 max_connections)
-        reserve_pool_size: "5"                   # Reserve connections for critical queries
-        reserve_pool_timeout: "3"                # Seconds to wait for reserve connection
-        max_db_connections: "500"                # Match PostgreSQL max_connections
-        max_user_connections: "500"              # Match PostgreSQL max_connections
-        server_idle_timeout: "600"               # Close idle server connections after 10 min
-        server_lifetime: "3600"                  # Recycle connections after 1 hour
-        server_connect_timeout: "5"              # Fast connection timeout
-        query_timeout: "0"                       # No query timeout (app manages this)
-        query_wait_timeout: "120"                # Wait for connection from pool
-        client_idle_timeout: "0"                 # No client timeout (app manages this)
-        idle_transaction_timeout: "0"            # No idle transaction timeout
-        log_connections: "0"                     # Disable connection logging (performance)
-        log_disconnections: "0"                  # Disable disconnection logging
-        log_pooler_errors: "1"                   # Log pooler errors only
-        stats_period: "60"                       # Stats reporting interval
-        ignore_startup_parameters: "extra_float_digits"
-    resources:
-      requests:
-        cpu: "1"
-        memory: "2Gi"
-      limits:
-        memory: "4Gi"
-    # Pod anti-affinity: guarantee no two pooler pods on same node (eliminate SPOF)
-    podTemplate:
-      spec:
-        affinity:
-          podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  cnpg.io/poolerName: ${PG_PRIMARY_CLUSTER_NAME}
-              topologyKey: "kubernetes.io/hostname"
 ---
 apiVersion: v1
 kind: Secret
@@ -290,16 +239,6 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pg-pooler-secret
-  namespace: ${PG_NAMESPACE}
-type: kubernetes.io/basic-auth
-stringData:
-  username: pooler
-  password: ${PG_DATABASE_PASSWORD}
----
-apiVersion: v1
-kind: Secret
-metadata:
   name: pg-superuser-secret
   namespace: ${PG_NAMESPACE}
 type: kubernetes.io/basic-auth
@@ -307,6 +246,66 @@ stringData:
   username: ${PG_DATABASE_USER}
   password: ${PG_DATABASE_PASSWORD}
 EOF
+
+# Deploy PgBouncer Pooler separately (supported in CNPG 1.27.1)
+echo ""
+echo "Deploying PgBouncer Pooler for connection pooling..."
+kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<'POOLEREOF'
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: ${PG_PRIMARY_CLUSTER_NAME}-pooler-rw
+  namespace: ${PG_NAMESPACE}
+spec:
+  cluster:
+    name: ${PG_PRIMARY_CLUSTER_NAME}
+  
+  instances: 3
+  type: rw
+  
+  pgbouncer:
+    poolMode: transaction
+    parameters:
+      max_client_conn: "10000"
+      default_pool_size: "25"
+      reserve_pool_size: "5"
+      reserve_pool_timeout: "3"
+      max_db_connections: "500"
+      max_user_connections: "500"
+      server_idle_timeout: "600"
+      server_lifetime: "3600"
+      server_connect_timeout: "5"
+      query_timeout: "0"
+      query_wait_timeout: "120"
+      client_idle_timeout: "0"
+      idle_transaction_timeout: "0"
+      log_connections: "0"
+      log_disconnections: "0"
+      log_pooler_errors: "1"
+      stats_period: "60"
+      ignore_startup_parameters: "extra_float_digits"
+  
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+    spec:
+      containers:
+      - name: pgbouncer
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            memory: "4Gi"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                cnpg.io/poolerName: ${PG_PRIMARY_CLUSTER_NAME}-pooler-rw
+            topologyKey: "kubernetes.io/hostname"
+POOLEREOF
 
 # Wait for cluster to be ready
 echo "Waiting for PostgreSQL cluster to be ready (this may take 5-10 minutes)..."
