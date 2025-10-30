@@ -31,9 +31,10 @@ echo "  Connection: PgBouncer Pooler (${POOLER_SERVICE}:5432)"
 echo "  Failover Type: Simulated (delete primary pod)"
 echo "  Duration: 5 minutes"
 echo "  Failover Trigger: 2:30 mark"
-echo "  Target TPS: Natural capacity (no rate limit)"
+echo "  Target RTO: ~10 seconds"
+echo "  Target TPS: 3,000+ (minimum)"
 echo "  Protocol: Prepared statements"
-echo "  Clients: 100 (4 threads)"
+echo "  Clients: 300 (100 per pod, 3 replicas)"
 echo "  Cluster: ${CLUSTER_NAME}"
 echo ""
 echo "Output Directory: $OUTPUT_DIR"
@@ -268,11 +269,13 @@ kubectl get events -n "${PG_NAMESPACE}" \
 
 echo ""
 
-# Target validation (Phase 4 goal: RTO < 18s)
-if [ "$TOTAL_FAILOVER_SECONDS" -lt 18 ]; then
-  echo "✓ Failover RTO target met (< 18s)"
+# Target validation (Target: RTO ~10s)
+if [ "$TOTAL_FAILOVER_SECONDS" -le 10 ]; then
+  echo "✓ Failover RTO target met (~10s)"
+elif [ "$TOTAL_FAILOVER_SECONDS" -le 15 ]; then
+  echo "⚠ Failover RTO acceptable (${TOTAL_FAILOVER_SECONDS}s, target ~10s)"
 else
-  echo "⚠ Failover RTO above target (${TOTAL_FAILOVER_SECONDS}s > 18s)"
+  echo "❌ Failover RTO above acceptable range (${TOTAL_FAILOVER_SECONDS}s > 15s)"
 fi
 
 # Phase 4: Authentication Recovery Analysis
