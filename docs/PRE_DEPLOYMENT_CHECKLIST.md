@@ -25,9 +25,9 @@
 
 ### Current Project Architecture:
 - **Deployment Method:** Azure CLI (via bash scripts)
-- **Configuration:** `config/environment-variables.sh` loaded by scripts
-- **Auto-generated:** `.env` file with unique resource names
-- **Orchestration:** `scripts/deploy-all.sh` runs 7 deployment phases
+- **Configuration:** `.env` auto-generated (DevContainer) or `config/environment-variables.sh` (manual)
+- **Auto-generated:** `.env` file with unique resource names at container startup
+- **Orchestration:** `scripts/deploy-all.sh` runs 8 deployment phases with logging
 
 ---
 
