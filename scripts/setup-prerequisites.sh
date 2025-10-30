@@ -108,6 +108,18 @@ install_krew_and_cnpg() {
     fi
 }
 
+# Install Azure CLI extensions
+install_az_extensions() {
+    echo "Installing Azure CLI extensions..."
+    
+    # Azure Managed Grafana extension
+    if ! az extension list --query "[?name=='amg'].name" -o tsv 2>/dev/null | grep -q "amg"; then
+        az extension add --name amg --upgrade --yes --only-show-errors 2>/dev/null || true
+    fi
+    
+    echo -e "${GREEN}✓ Azure CLI extensions installed${NC}"
+}
+
 # Main installation
 main() {
     printf "Checking prerequisites...\n\n"
@@ -118,6 +130,7 @@ main() {
     install_jq
     install_netcat
     install_krew_and_cnpg
+    install_az_extensions
     
     echo -e "\n${GREEN}All prerequisites installed!${NC}"
     echo -e "${YELLOW}Next steps:${NC}"

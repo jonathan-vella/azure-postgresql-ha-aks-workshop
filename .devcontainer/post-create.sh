@@ -63,6 +63,12 @@ az config set extension.dynamic_install_allow_preview=true > /dev/null 2>&1
 echo "✓ Azure CLI configured"
 echo ""
 
+# Install Azure CLI extensions
+echo "📦 Installing Azure CLI extensions..."
+az extension add --name amg --upgrade --yes --only-show-errors > /dev/null 2>&1 || true
+echo "✓ Azure CLI extensions installed"
+echo ""
+
 # Verify installations
 echo "🔍 Verifying tool installations..."
 echo ""

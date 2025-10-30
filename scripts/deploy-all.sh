@@ -80,6 +80,13 @@ if ! az account show >/dev/null 2>&1; then
         exit 1
     fi
 fi
+
+# Install required Azure CLI extensions
+echo "Checking Azure CLI extensions..."
+if ! az extension list --query "[?name=='amg'].name" -o tsv | grep -q "amg"; then
+    echo "Installing Azure Managed Grafana (amg) extension..."
+    az extension add --name amg --upgrade --yes --only-show-errors 2>/dev/null || true
+fi
 echo -e "${GREEN}✓ All prerequisites validated${NC}"
 echo ""
 

@@ -316,14 +316,8 @@ retry_kubectl kubectl create namespace "$PG_SYSTEM_NAMESPACE" --context "$AKS_PR
 echo "Verifying namespaces..."
 kubectl get namespace "$PG_NAMESPACE" "$PG_SYSTEM_NAMESPACE"
 
-# Enable Container Insights
-echo "Enabling Container Insights on AKS cluster..."
-az aks enable-addons \
-    --addon monitoring \
-    --name "$AKS_PRIMARY_CLUSTER_NAME" \
-    --resource-group "$RESOURCE_GROUP_NAME" \
-    --workspace-resource-id "$ALA_RESOURCE_ID" \
-    --output table
+# Note: Container Insights is already enabled during AKS cluster creation
+# via --enable-addons monitoring flag, so no need to enable it again here
 
 # Save outputs to file for next scripts
 OUTPUT_FILE="${SCRIPT_DIR}/../.deployment-outputs"
