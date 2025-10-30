@@ -31,7 +31,7 @@ This project automates the deployment of a highly available PostgreSQL database 
 ├── config/                  # Configuration files
 │   └── environment-variables.sh    # Bash environment configuration (all parameters)
 ├── scripts/                 # Deployment automation (Azure CLI)
-│   ├── deploy-all.sh                           # Master orchestration (7 steps)
+│   ├── deploy-all.sh                           # Master orchestration (8 steps including sub-steps)
 │   ├── 02-create-infrastructure.sh             # Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway)
 │   ├── 03-configure-workload-identity.sh       # Federated credentials
 │   ├── 04-deploy-cnpg-operator.sh              # Installs CNPG operator
@@ -161,7 +161,7 @@ source config/environment-variables.sh
 # Or if .env exists:
 source .env
 
-# 2. Deploy complete stack (runs scripts 02, 03, 04, 04a, 05, 06, 06a, 07)
+# 2. Deploy complete stack (8 steps: 02, 03, 04, 04a, 05, 06, 06a, 07)
 ./scripts/deploy-all.sh
 
 # 3. Verify deployment
@@ -281,7 +281,7 @@ psql -h localhost -U app -d appdb
 - **07a-run-cluster-validation**: Runs comprehensive validation tests
 - **08-test-pgbench**: Basic load testing (pgbench)
 - **08a-test-pgbench-high-load**: High load testing (8K-10K TPS target)
-- **deploy-all**: Master orchestration script (7 steps: 2, 3, 4, 4a, 5, 6, 6a, 7)
+- **deploy-all**: Master orchestration script (8 steps: 2, 3, 4, 4a, 5, 6, 6a, 7)
 - Bash scripts only (DevContainer runs on Linux)
 
 ### Kubernetes Manifests (`kubernetes/postgresql-cluster.yaml`)
