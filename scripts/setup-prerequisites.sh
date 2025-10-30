@@ -69,6 +69,21 @@ install_jq() {
     fi
 }
 
+# Install netcat
+install_netcat() {
+    if ! command -v nc &> /dev/null; then
+        echo "Installing netcat..."
+        if [[ "$OS" == "Darwin" ]]; then
+            # netcat is pre-installed on macOS
+            echo -e "${GREEN}✓ netcat available${NC}"
+        elif [[ "$OS" == "Linux" ]]; then
+            sudo apt-get install -y netcat-openbsd
+        fi
+    else
+        echo -e "${GREEN}✓ netcat installed${NC}"
+    fi
+}
+
 # Install Krew and CNPG plugin
 install_krew_and_cnpg() {
     if ! kubectl krew version &> /dev/null; then
@@ -101,6 +116,7 @@ main() {
     install_kubectl
     install_helm
     install_jq
+    install_netcat
     install_krew_and_cnpg
     
     echo -e "\n${GREEN}All prerequisites installed!${NC}"
