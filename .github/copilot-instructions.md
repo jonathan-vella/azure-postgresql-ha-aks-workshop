@@ -55,6 +55,7 @@ This project automates the deployment of a highly available PostgreSQL database 
     ├── GRAFANA_DASHBOARD_GUIDE.md      # Dashboard usage
     ├── IMPORT_DASHBOARD_NOW.md         # Dashboard import
     ├── FAILOVER_TESTING.md             # HA testing procedures
+    ├── CNPG_BEST_PRACTICES.md          # CloudNativePG 1.27 best practices
     └── VM_SETUP_GUIDE.md               # Load test VM setup
 ```
 

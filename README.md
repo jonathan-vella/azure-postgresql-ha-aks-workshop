@@ -234,6 +234,7 @@ psql -h localhost -U app -d appdb
 | 💰 [**COST_ESTIMATION.md**](docs/COST_ESTIMATION.md) | Hourly/monthly cost breakdown (~$2,873/month) |
 | 📊 [**GRAFANA_DASHBOARD_GUIDE.md**](docs/GRAFANA_DASHBOARD_GUIDE.md) | Dashboard usage and metrics |
 | 🔄 [**FAILOVER_TESTING.md**](docs/FAILOVER_TESTING.md) | High availability testing |
+| 🎯 [**CNPG_BEST_PRACTICES.md**](docs/CNPG_BEST_PRACTICES.md) | CloudNativePG 1.27 production best practices |
 
 ### ⚙️ Configuration
 ```
