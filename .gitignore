@@ -70,6 +70,9 @@ config/*.secrets.json
 .helm/
 .kube/cache/
 
+# Documentation workspace (local reference)
+cnpg-docs/
+
 # Python
 __pycache__/
 *.py[cod]
