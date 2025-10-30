@@ -107,6 +107,7 @@ spec:
   startDelay: 3                                  # Reduced from 5s - faster pod startup
   stopDelay: 3                                   # Reduced from 5s - faster pod shutdown
   switchoverDelay: 3                             # Reduced from 5s - faster planned switchover
+  livenessProbeTimeout: 3                        # Liveness probe timeout (from 30s default)
   
   smartShutdownTimeout: 5                        # Reduced from 10s - faster graceful shutdown
   
