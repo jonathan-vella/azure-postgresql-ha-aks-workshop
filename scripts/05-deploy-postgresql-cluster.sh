@@ -279,15 +279,15 @@ spec:
       max_db_connections: "500"
       max_user_connections: "500"
       # Phase 1 Optimization: Faster failover recovery
-      # Reduced from 600s (10min) to 120s (2min) - forces faster connection refresh
-      server_idle_timeout: "120"
-      # Reduced from 3600s (1hr) to 300s (5min) - critical for auth recovery after failover
-      server_lifetime: "300"
+      # Reduced from 600s (10min) to 60s (1min) - forces faster connection refresh
+      server_idle_timeout: "60"
+      # Reduced from 300s (5min) to 120s (2min) - critical for auth recovery after failover
+      server_lifetime: "120"
       server_connect_timeout: "5"
-      # Faster health checks for failure detection
-      server_check_delay: "30"
+      # Faster health checks for failure detection (10s for rapid primary detection)
+      server_check_delay: "10"
       query_timeout: "0"
-      query_wait_timeout: "120"
+      query_wait_timeout: "300"
       client_idle_timeout: "0"
       idle_transaction_timeout: "0"
       # Enable connection logging for auth recovery troubleshooting
