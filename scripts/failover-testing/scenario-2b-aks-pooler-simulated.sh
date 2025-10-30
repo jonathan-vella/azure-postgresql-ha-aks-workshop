@@ -49,9 +49,13 @@ export PGPASSWORD=$(kubectl get secret "${APP_SECRET}" -n "${PG_NAMESPACE}" -o j
 echo "✓ Prerequisites validated"
 echo ""
 
-# Pre-failover consistency
+# Pre-failover consistency (run from inside cluster)
 echo "━━━ Pre-Failover Consistency Check ━━━"
-bash "$SCRIPT_DIR/verify-consistency.sh" "${POOLER_SERVICE}" "${PG_DATABASE_USER}" "${PG_DATABASE_NAME}" "pre-failover" "$OUTPUT_DIR"
+kubectl run consistency-check-pre --rm -i --restart=Never --image=postgres:17 -n "${PG_NAMESPACE}" \
+  --env="PGPASSWORD=${PGPASSWORD}" -- bash -c "
+    psql -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} -t -c 'SELECT count(*) as tx_count FROM pgbench_history;' > /tmp/pre-tx-count.txt 2>&1 || echo 0 > /tmp/pre-tx-count.txt
+    psql -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} -t -c 'SELECT sum(abalance) as account_sum FROM pgbench_accounts;' 2>&1 || echo 'No data yet'
+    " | tee "$OUTPUT_DIR/pre-failover-consistency.log"
 
 PRIMARY_POD=$(kubectl get pods -n "${PG_NAMESPACE}" -l role=primary -o jsonpath='{.items[0].metadata.name}')
 echo "Primary (to be deleted): $PRIMARY_POD"
@@ -134,9 +138,13 @@ echo ""
 
 kubectl wait --for=condition=Ready=false pod/pgbench-client-scenario2b -n "${PG_NAMESPACE}" --timeout=60s 2>/dev/null || true
 
-# Post-failover consistency
+# Post-failover consistency (run from inside cluster)
 echo "━━━ Post-Failover Consistency Check ━━━"
-bash "$SCRIPT_DIR/verify-consistency.sh" "${POOLER_SERVICE}" "${PG_DATABASE_USER}" "${PG_DATABASE_NAME}" "post-failover" "$OUTPUT_DIR"
+kubectl run consistency-check-post --rm -i --restart=Never --image=postgres:17 -n "${PG_NAMESPACE}" \
+  --env="PGPASSWORD=${PGPASSWORD}" -- bash -c "
+    psql -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} -t -c 'SELECT count(*) as tx_count FROM pgbench_history;'
+    psql -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} -t -c 'SELECT sum(abalance) as account_sum FROM pgbench_accounts;'
+    " | tee "$OUTPUT_DIR/post-failover-consistency.log"
 
 kubectl logs pgbench-client-scenario2b -n "${PG_NAMESPACE}" > "$OUTPUT_DIR/pgbench-output.log"
 
