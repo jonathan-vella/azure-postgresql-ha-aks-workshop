@@ -115,30 +115,33 @@ spec:
   
   postgresql:
     parameters:
+      # Phase 2 Optimization: Microsoft Azure PostgreSQL HA Guidelines
+      # Documentation: https://learn.microsoft.com/en-us/azure/aks/deploy-postgresql-ha
+      
       # Connection and memory settings (dynamically calculated from PG_MEMORY)
       max_connections: "500"
-      shared_buffers: "${SHARED_BUFFERS}GB"          # 25% of PG_MEMORY (auto-calculated)
-      effective_cache_size: "${EFFECTIVE_CACHE_SIZE}GB"  # 75% of PG_MEMORY (auto-calculated)
-      work_mem: "${WORK_MEM}MB"                      # shared_buffers / max_connections / 1.5 (auto-calculated)
-      maintenance_work_mem: "${MAINTENANCE_WORK_MEM}GB"  # 3% of PG_MEMORY, max 2GB (auto-calculated)
+      shared_buffers: "${SHARED_BUFFERS}GB"          # 25% of PG_MEMORY (Microsoft: 25% node memory)
+      effective_cache_size: "${EFFECTIVE_CACHE_SIZE}GB"  # 75% of PG_MEMORY (Microsoft: 75% node memory)
+      work_mem: "${WORK_MEM}MB"                      # shared_buffers / max_connections / 1.5 (Microsoft: 1/256th node memory)
+      maintenance_work_mem: "${MAINTENANCE_WORK_MEM}GB"  # 3% of PG_MEMORY, max 2GB (Microsoft: 6.25% node memory, max 2GB)
       
-      # WAL (Write-Ahead Log) optimization for high throughput (40K IOPS disk)
+      # WAL (Write-Ahead Log) optimization - Microsoft Azure recommendations
       wal_buffers: "64MB"                        # -1 = auto-tune to 3% of shared_buffers
-      min_wal_size: "4GB"                        # Doubled to reduce checkpoint frequency
-      max_wal_size: "16GB"                       # 4x increase for sustained writes
-      wal_compression: "lz4"                     # Fast compression for high TPS
+      min_wal_size: "4GB"                        # Microsoft: 4GB for sustained workloads
+      max_wal_size: "6GB"                        # Microsoft: 6GB (optimized for checkpoints)
+      wal_compression: "lz4"                     # Microsoft: lz4 (fast, efficient compression)
       wal_writer_delay: "10ms"                   # Faster WAL writes for low latency
-      wal_writer_flush_after: "8MB"              # Larger flush batches for throughput
+      wal_writer_flush_after: "2MB"              # Microsoft: 2MB (balanced flush strategy)
       
-      # Checkpoint tuning for performance
+      # Checkpoint tuning - Microsoft Azure recommendations
       checkpoint_completion_target: "0.9"        # Spread checkpoints over 90% of interval
-      checkpoint_timeout: "15min"                # Longer intervals for sustained workloads
-      checkpoint_flush_after: "256kB"            # Max allowed value
+      checkpoint_timeout: "15min"                # Microsoft: 15min (balanced for sustained writes)
+      checkpoint_flush_after: "2MB"              # Microsoft: 2MB (effective for Premium SSD v2)
       
-      # I/O performance tuning (Premium SSD v2: 40K IOPS, 1200 MB/s)
-      random_page_cost: "1.1"                    # Optimized for Premium SSD v2
-      effective_io_concurrency: "200"            # High for Premium SSD v2
-      maintenance_io_concurrency: "200"          # Parallel maintenance I/O
+      # I/O performance tuning - Microsoft Azure for Premium SSD v2
+      random_page_cost: "1.1"                    # Microsoft: 1.1 (optimized for Premium SSD)
+      effective_io_concurrency: "64"             # Microsoft: 64 (matches Premium SSD v2 capabilities)
+      maintenance_io_concurrency: "64"           # Microsoft: 64 (parallel maintenance operations)
       
       # Parallel query execution (optimized for 8 vCPUs)
       max_worker_processes: "12"                 # 1.5× vCPUs (8×1.5=12)
@@ -146,10 +149,10 @@ spec:
       max_parallel_workers: "8"                  # Match vCPUs
       max_parallel_maintenance_workers: "4"      # Half of vCPUs
       
-      # Autovacuum tuning for high-write workloads
+      # Autovacuum tuning - Microsoft Azure recommendations for high-write workloads
       autovacuum_max_workers: "6"                # Increased from default 3
       autovacuum_naptime: "10s"                  # More frequent vacuum checks
-      autovacuum_vacuum_cost_limit: "10000"      # Aggressive vacuum (from 200)
+      autovacuum_vacuum_cost_limit: "2400"       # Microsoft: 2400 (balanced vacuum aggressiveness)
       autovacuum_vacuum_scale_factor: "0.05"     # Vacuum at 5% dead tuples (from 20%)
       
       # Statistics and query planner
