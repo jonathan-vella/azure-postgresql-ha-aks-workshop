@@ -278,19 +278,21 @@ spec:
       reserve_pool_timeout: "3"
       max_db_connections: "500"
       max_user_connections: "500"
-      # Phase 1 Optimization: Faster failover recovery
-      # Reduced from 600s (10min) to 60s (1min) - forces faster connection refresh
-      server_idle_timeout: "60"
-      # Reduced from 300s (5min) to 120s (2min) - critical for auth recovery after failover
-      server_lifetime: "120"
-      server_connect_timeout: "5"
-      # Faster health checks for failure detection (10s for rapid primary detection)
-      server_check_delay: "10"
-      query_timeout: "0"
-      query_wait_timeout: "300"
-      client_idle_timeout: "0"
-      idle_transaction_timeout: "0"
-      # Enable connection logging for auth recovery troubleshooting
+      # Phase 2 Optimization: Production failover resilience
+      # Authentication recovery optimization - prevent cache poisoning during failover
+      server_lifetime: "3600"             # 1 hour (from 120s) - reduce connection churn
+      server_idle_timeout: "600"          # 10 minutes (from 60s) - keep connections alive longer
+      server_login_retry: "5"             # Retry failed auth attempts (NEW - critical for failover)
+      # Connection establishment and health checks
+      server_connect_timeout: "10"        # 10s (from 5s) - more tolerant during failover
+      server_check_delay: "10"            # Health check interval for failure detection
+      server_check_query: "SELECT 1"      # Simple health check query (NEW)
+      # Query timeouts - balanced for application workloads
+      query_timeout: "0"                  # Disable query timeout (application controls)
+      query_wait_timeout: "120"           # 2 minutes (from 300s) - faster queue timeout
+      client_idle_timeout: "0"            # No client timeout (application manages)
+      idle_transaction_timeout: "0"       # No transaction timeout (application controls)
+      # Logging for observability
       log_connections: "1"
       log_disconnections: "1"
       log_pooler_errors: "1"
