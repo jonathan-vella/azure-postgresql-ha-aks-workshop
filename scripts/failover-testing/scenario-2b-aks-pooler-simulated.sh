@@ -63,10 +63,10 @@ PRIMARY_POD=$(kubectl get pods -n "${PG_NAMESPACE}" -l role=primary -o jsonpath=
 echo "Primary (to be deleted): $PRIMARY_POD"
 echo ""
 
-# Create workload ConfigMap
+# Create workload ConfigMap (Phase 3: Use balanced 40/60 read/write workload)
 kubectl create configmap payment-gateway-workload \
   -n "${PG_NAMESPACE}" \
-  --from-file=payment-gateway-workload.sql="$SCRIPT_DIR/payment-gateway-workload.sql" \
+  --from-file=payment-gateway-workload.sql="$SCRIPT_DIR/payment-gateway-balanced-workload.sql" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
 # Deploy pgbench pod
