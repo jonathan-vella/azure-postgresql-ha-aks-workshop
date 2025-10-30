@@ -100,6 +100,8 @@ Create an Ubuntu VM in the VM subnet for external testing:
 
 ```bash
 # Load environment variables
+# DevContainer: source .env
+# Manual: source config/environment-variables.sh
 source .env  # or source config/environment-variables.sh
 source .deployment-outputs
 

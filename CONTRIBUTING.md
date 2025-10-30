@@ -17,13 +17,43 @@ Be respectful, inclusive, and professional in all interactions. We're committed 
 
 ### Setup Development Environment
 
+**Option A: Using DevContainer (Recommended)**
 ```bash
 # Clone the repository
 git clone https://github.com/jonathan-vella/azure-postgresql-ha-aks-workshop.git
 cd azure-postgresql-ha-aks-workshop
 
+# Open in VS Code and reopen in container
+# Ctrl+Shift+P -> "Dev Containers: Reopen in Container"
+
+# Wait for container build (2-5 minutes)
+# .env is auto-generated with unique resource names
+
+# Load environment
+source .env
+
 # Create a feature branch
 git checkout -b feature/your-feature-name
+
+# Review documentation
+cat docs/README.md
+cat docs/SETUP_COMPLETE.md
+```
+
+**Option B: Manual Setup**
+```bash
+# Clone the repository
+git clone https://github.com/jonathan-vella/azure-postgresql-ha-aks-workshop.git
+cd azure-postgresql-ha-aks-workshop
+
+# Install prerequisites
+./scripts/setup-prerequisites.sh
+
+# Create a feature branch
+git checkout -b feature/your-feature-name
+
+# Configure environment
+source config/environment-variables.sh
 
 # Review documentation
 cat docs/README.md

@@ -40,15 +40,20 @@ azure-postgresql-ha-aks-workshop/
 ```
 
 ### Key Files Explained:
-- **`.env`**: Auto-generated on devcontainer startup with unique resource names
-- **`config/environment-variables.sh`**: Template loaded by deployment scripts
-- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 8 deployment steps
+- **`.env`**: Auto-generated on devcontainer startup with unique resource names (gitignored)
+- **`.devcontainer/generate-env.sh`**: ⭐ Auto-generates `.env` file with unique suffix and resource names
+- **`config/environment-variables.sh`**: Template loaded by deployment scripts (manual setup)
+- **`scripts/deploy-all.sh`**: ⭐ **Main deployment script** - orchestrates 8 deployment steps with logging
+- **`scripts/regenerate-env.sh`**: ⭐ Regenerate `.env` with new suffix (backs up old .env)
+- **`scripts/setup-prerequisites.sh`**: ⭐ Installs required tools (non-DevContainer environments)
 - **Scripts 02-07**: Individual deployment phases using Azure CLI and Helm
 - **Script 02**: Creates Azure infrastructure including Container Insights for pod/node monitoring
+- **Script 04**: Installs CloudNativePG operator v1.27.1 via Helm
 - **Script 04a**: Installs Barman Cloud Plugin v0.8.0 (required for backup/restore operations)
 - **Script 05**: Deploys PostgreSQL cluster with PodMonitor (Azure Monitor provides PodMonitor CRD natively)
 - **Script 06**: Configures Azure Managed Grafana
 - **Script 06a**: Configures Azure Monitor Managed Prometheus scraping
+- **Script 06b**: ⭐ Automated Grafana dashboard import (optional)
 - **Script 07**: Displays connection information (direct PostgreSQL and PgBouncer pooler endpoints)
 - **Script 07a**: Comprehensive validation (connectivity, replication, HA, pooler, backups, monitoring)
 
@@ -137,30 +142,30 @@ Install manually or use Windows Subsystem for Linux (WSL):
 
 ### Step 2: Generate and Load Environment Variables
 
-**In DevContainer (Auto-generated on startup):**
+**Option A: DevContainer (Auto-generated on startup):**
 ```bash
 # Variables are auto-generated when devcontainer starts
 # Load them in your terminal session:
 source .env
 
 # Verify loaded
+echo "Suffix: $SUFFIX"
 echo "Resource Group: $RESOURCE_GROUP_NAME"
 echo "AKS Cluster: $AKS_PRIMARY_CLUSTER_NAME"
 echo "Storage Account: $PG_PRIMARY_STORAGE_ACCOUNT_NAME"
+
+# Optional: Regenerate with new suffix for fresh deployment
+./scripts/regenerate-env.sh
 ```
 
-**Manual Generation (if needed):**
+**Option B: Manual Setup (non-DevContainer):**
 ```bash
-# Regenerate with new random suffix
-rm .env
-bash .devcontainer/generate-env.sh
-source .env
-```
-
-**Or load from template:**
-```bash
-# Linux/Mac
+# Load from configuration template
 source config/environment-variables.sh
+
+# Verify loaded
+echo "Resource Group: $RESOURCE_GROUP_NAME"
+echo "AKS Version: $AKS_CLUSTER_VERSION"
 ```
 
 **⚠️ Important:** Change the password before deployment:
@@ -179,20 +184,28 @@ az account show  # Verify subscription
 **Run the master deployment script:**
 ```bash
 # Ensure environment variables are loaded
-source .env  # or source config/environment-variables.sh
+source .env  # (DevContainer) or source config/environment-variables.sh (Manual)
 
-# Run complete deployment (7 automated steps)
+# Run complete deployment (8 automated steps with logging)
 bash scripts/deploy-all.sh
 ```
 
+**What happens:**
+- Logs saved to `logs/deployment-YYYYMMDD-HHMMSS.log`
+- Prompts to regenerate suffix for fresh deployment (DevContainer only)
+- Validates prerequisites (Azure CLI, kubectl, helm, jq)
+- Runs all deployment phases automatically
+
 This will execute all phases:
-1. Create Azure infrastructure (Resource Group, AKS, Storage, Identity, VM Subnet)
-2. Configure Workload Identity with Federated Credentials
-3. Deploy CloudNativePG operator via Helm (1.27.1)
-4. Install Barman Cloud Plugin v0.8.0 (modern backup architecture)
-5. Deploy PostgreSQL HA cluster (3 instances + 3 PgBouncer poolers)
-6. Configure Azure Monitor and Grafana
-7. Display connection information
+1. Validate prerequisites and load environment
+2. Create Azure infrastructure (Resource Group, AKS, Storage, Identity, Container Insights, Bastion, NAT Gateway)
+3. Configure Workload Identity with Federated Credentials
+4. Deploy CloudNativePG operator via Helm (v1.27.1)
+5. Install Barman Cloud Plugin v0.8.0 (modern backup architecture)
+6. Deploy PostgreSQL HA cluster (3 instances + 3 PgBouncer poolers + PodMonitor)
+7. Configure Azure Managed Grafana
+8. Configure Azure Monitor Managed Prometheus scraping
+9. Display connection information
 
 ### Step 4: Validate Deployment (Recommended ⭐)
 ```bash

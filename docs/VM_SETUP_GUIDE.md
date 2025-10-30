@@ -19,8 +19,8 @@ This guide covers setting up Azure VMs in the dedicated VM subnet for external f
 ## Automated VM Creation
 
 ```bash
-# Source environment variables
-source config/environment-variables.sh
+# Source environment variables (DevContainer: source .env)
+source .env  # or source config/environment-variables.sh
 
 # Load deployment outputs
 source .deployment-outputs

@@ -29,6 +29,22 @@ Welcome! This guide will get you up and running in **25-30 minutes**.
 ## ⚡ Quick Start (3 Steps)
 
 ### 1️⃣ Configure
+
+**Option A: Using DevContainer (Recommended)**
+```bash
+# Open in VS Code and reopen in container
+# Ctrl+Shift+P -> "Dev Containers: Reopen in Container"
+
+# .env is auto-generated with unique resource names
+# Load it in your terminal
+source .env
+
+# Review generated configuration
+echo "Suffix: $SUFFIX"
+echo "Resource Group: $RESOURCE_GROUP_NAME"
+```
+
+**Option B: Manual Setup**
 ```bash
 # Clone and navigate
 cd azure-postgresql-ha-aks-workshop
@@ -43,6 +59,17 @@ code config/environment-variables.sh
 - Resource sizing (defaults support 8-10K TPS)
 
 ### 2️⃣ Deploy
+
+**Using DevContainer**:
+```bash
+# Load auto-generated configuration
+source .env
+
+# Deploy everything (8 automated steps, 20-30 minutes)
+./scripts/deploy-all.sh
+```
+
+**Using Manual Setup**:
 ```bash
 # Load configuration
 source config/environment-variables.sh
@@ -52,12 +79,15 @@ source config/environment-variables.sh
 ```
 
 **What happens:**
-1. Creates Azure infrastructure (AKS, Storage, Identity)
-2. Installs CloudNativePG operator
-3. Deploys PostgreSQL HA cluster (3 instances)
-4. Configures PgBouncer pooling (3 instances)
-5. Sets up monitoring (Grafana + Azure Monitor)
-6. Configures automated backups
+1. Validates prerequisites and prompts to regenerate suffix (optional)
+2. Creates Azure infrastructure (AKS, Storage, Identity, Container Insights)
+3. Configures workload identity for backup access
+4. Installs CloudNativePG operator (v1.27.1)
+5. Installs Barman Cloud Plugin for backups
+6. Deploys PostgreSQL HA cluster (3 instances) + PgBouncer pooling (3 instances)
+7. Sets up monitoring (Grafana + Azure Monitor Managed Prometheus)
+8. Displays connection information
+9. Logs all output to `logs/deployment-YYYYMMDD-HHMMSS.log`
 
 ### 3️⃣ Validate
 ```bash
@@ -93,10 +123,13 @@ source config/environment-variables.sh
 
 | Script | Purpose | Runtime |
 |--------|---------|---------|
-| `deploy-all.sh` | Complete deployment | 20-30 min |
+| `deploy-all.sh` | Complete deployment (8 steps with logging) | 20-30 min |
+| `regenerate-env.sh` | Regenerate .env with new suffix | <1 min |
+| `setup-prerequisites.sh` | Install required tools | 5-10 min |
 | `07a-run-cluster-validation.sh` | In-cluster validation (14 tests, 100% pass) ⭐ | ~7 sec |
 | `07-display-connection-info.sh` | Show connection details | Instant |
 | `08-test-pgbench.sh` | Performance testing | 5-10 min |
+| `06b-import-grafana-dashboard.sh` | Import Grafana dashboard | <1 min |
 | Failover scripts | HA testing | See `scripts/failover-testing/` |
 
 ---

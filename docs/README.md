@@ -28,13 +28,21 @@ This project automates the deployment of a **3-node highly available PostgreSQL 
 
 ### Tools Required
 
+**Using DevContainer (Recommended)**:
+All tools are pre-installed automatically:
 - Azure CLI (v2.56+)
-- kubectl (v1.21+)
-- Helm (v3.0+)
-- jq (v1.5+)
+- kubectl (v1.31.0+)
+- Helm (v3.13.0+)
+- jq (v1.7.1+)
+- bc (command-line calculator)
+- psql (PostgreSQL client)
+- netcat (network testing)
 - OpenSSL (v3.3+)
+- kubectl-cnpg v1.27.1 (CloudNativePG plugin)
 - Krew (kubectl plugin manager)
-- CloudNativePG (CNPG) kubectl plugin
+
+**Manual Installation**:
+- Run `./scripts/setup-prerequisites.sh` to install all required tools
 
 ### Azure Requirements
 
@@ -58,6 +66,26 @@ Premium SSD v2 disks are available in:
 ## 🚀 Quick Start
 
 ### 1. Configure Environment Variables
+
+**Option A: DevContainer (Auto-generated)**
+
+When using DevContainer, `.env` is automatically generated at container startup:
+
+```bash
+# Load auto-generated configuration
+source .env
+
+# Review configuration
+echo "Suffix: $SUFFIX"
+echo "Resource Group: $RESOURCE_GROUP_NAME"
+echo "AKS Cluster: $AKS_PRIMARY_CLUSTER_NAME"
+echo "Storage Account: $PG_PRIMARY_STORAGE_ACCOUNT_NAME"
+
+# Optional: Regenerate with new suffix for fresh deployment
+./scripts/regenerate-env.sh
+```
+
+**Option B: Manual Configuration**
 
 Edit `config/environment-variables.sh`:
 
@@ -84,16 +112,29 @@ PG_DATABASE_PASSWORD="SecurePassword123!"  # Change this!
 
 ### 2. Deploy All Components
 
+**Using DevContainer**:
+```bash
+# Load auto-generated environment variables
+source .env
+
+# Run deployment (8 automated steps with logging)
+./scripts/deploy-all.sh
+```
+
+**Using Manual Setup**:
 ```bash
 # Load environment variables into current shell session
 # This reads config/environment-variables.sh and exports all variables
 source config/environment-variables.sh
 
-# Run deployment (uses loaded variables)
+# Run deployment (8 automated steps with logging)
 ./scripts/deploy-all.sh
 ```
 
-**What happens:** The `source` command executes the script in your current shell, making all `export VARIABLE=value` statements available to subsequent commands and scripts.
+**What happens:** 
+- The `source` command executes the script in your current shell, making all `export VARIABLE=value` statements available to subsequent commands and scripts
+- Deployment logs are saved to `logs/deployment-YYYYMMDD-HHMMSS.log`
+- Script prompts if you want to regenerate suffix for fresh deployment (DevContainer only)
 
 ### 3. Validate Deployment (Recommended ⭐)
 
