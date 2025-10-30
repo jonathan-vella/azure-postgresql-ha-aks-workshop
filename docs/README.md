@@ -95,7 +95,26 @@ source config/environment-variables.sh
 
 **What happens:** The `source` command executes the script in your current shell, making all `export VARIABLE=value` statements available to subsequent commands and scripts.
 
-### 3. Verify Deployment
+### 3. Validate Deployment (Recommended ⭐)
+
+```bash
+# Run comprehensive validation (20+ tests)
+./scripts/07a-validate-cluster.sh
+```
+
+**What gets validated:**
+- ✅ Cluster status & HA configuration
+- ✅ Multi-zone pod distribution  
+- ✅ Service endpoints (rw, ro, pooler)
+- ✅ PostgreSQL connectivity
+- ✅ Synchronous replication (RPO=0)
+- ✅ PgBouncer pooler (3 instances)
+- ✅ WAL archiving & backups
+- ✅ Monitoring configuration
+
+**Expected result:** 16-20 tests pass (80-100% success rate)
+
+### 4. Manual Verification (Optional)
 
 ```bash
 # Get credentials
@@ -124,6 +143,7 @@ kubectl cnpg status pg-primary -n cnpg-database
 │   ├── 04-deploy-cnpg-operator.sh          # Installs CNPG operator
 │   ├── 05-deploy-postgresql-cluster.sh     # Deploys PostgreSQL HA
 │   ├── 06-configure-monitoring.sh          # Configures observability
+│   ├── 07a-validate-cluster.sh             # ⭐ Validates deployment (20+ tests)
 │   ├── 07-test-pgbench.sh                  # Tests pgbench performance tool
 │   └── deploy-all.sh                       # Master orchestration
 ├── kubernetes/

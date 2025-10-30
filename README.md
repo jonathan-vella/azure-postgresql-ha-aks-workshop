@@ -191,7 +191,23 @@ kubectl cnpg status pg-primary -n cnpg-database
 kubectl get pods -n cnpg-database -l cnpg.io/cluster=pg-primary
 ```
 
-### 4️⃣ Connect
+### 4️⃣ Validate Deployment
+```bash
+# Run comprehensive cluster validation
+./scripts/07a-validate-cluster.sh
+```
+
+**What gets validated:**
+- ✅ Cluster status and HA configuration
+- ✅ Multi-zone pod distribution
+- ✅ Service endpoints  
+- ✅ PostgreSQL connectivity (primary and replicas)
+- ✅ Data replication (RPO=0)
+- ✅ PgBouncer pooler (3 instances)
+- ✅ WAL archiving and backups
+- ✅ Monitoring configuration
+
+### 5️⃣ Connect
 ```bash
 # Option 1: Connect via PgBouncer (Recommended for Applications)
 kubectl port-forward svc/pg-primary-pooler-rw 5432:5432 -n cnpg-database &
@@ -242,6 +258,7 @@ scripts/
 ├── 05-deploy-postgresql-cluster.sh     - Deploys PostgreSQL cluster + PgBouncer pooler + PodMonitor
 ├── 06-configure-monitoring.sh          - Configures Grafana + Azure Monitor
 ├── 07-display-connection-info.sh       - Displays connection endpoints and credentials
+├── 07a-validate-cluster.sh             - ⭐ Validates deployment (connectivity, replication, HA)
 └── deploy-all.sh                       - Master orchestration script (8 steps)
 ```
 

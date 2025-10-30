@@ -95,11 +95,12 @@ graph TD
     
     L3 --> M["✅ DEPLOYMENT COMPLETE"]
     M --> N["📊 Verification Steps"]
-    N --> N1["Check pod status"]
-    N --> N2["Verify connections"]
-    N --> N3["Test backups"]
-    N --> N4["Run pgbench test"]
-    N1 & N2 & N3 & N4 --> O["🎉 Lab Setup Complete!"]
+    N --> N1["Run validation script"]
+    N --> N2["Check pod status"]
+    N --> N3["Verify connections"]
+    N --> N4["Test backups"]
+    N --> N5["Run pgbench test"]
+    N1 & N2 & N3 & N4 & N5 --> O["🎉 Lab Setup Complete!"]
     
     style A fill:#4CAF50,stroke:#2E7D32,color:#fff
     style M fill:#4CAF50,stroke:#2E7D32,color:#fff
@@ -188,7 +189,41 @@ This will execute all phases:
 6. Configure Azure Monitor and Grafana
 7. Display connection information
 
-### Step 4: Verify Deployment
+### Step 4: Validate Deployment (Recommended ⭐)
+```bash
+# Run comprehensive validation script (20+ tests)
+./scripts/07a-validate-cluster.sh
+```
+
+**What gets validated:**
+- ✅ Cluster status and HA configuration (3/3 instances ready)
+- ✅ Multi-zone pod distribution (across 3 availability zones)
+- ✅ Service endpoints (rw, ro, pooler services)
+- ✅ PostgreSQL connectivity (primary via PgBouncer)
+- ✅ Data write operations (table creation, inserts)
+- ✅ Synchronous replication (RPO=0 validation)
+- ✅ Data consistency (primary vs replica comparison)
+- ✅ PgBouncer pooler (3 instances, transaction mode)
+- ✅ WAL archiving and backups (Barman plugin)
+- ✅ Monitoring configuration (PodMonitor, metrics)
+
+**Expected Output:**
+```
+========================================
+Validation Summary
+========================================
+
+Total Tests:     20
+Tests Passed:    16-20
+Tests Failed:    0-4
+Warnings:        0-6
+Pass Rate:       80-100%
+
+✅ ALL TESTS PASSED
+PostgreSQL HA Cluster is fully operational!
+```
+
+### Step 5: Manual Verification (Optional)
 ```bash
 # Get cluster credentials
 az aks get-credentials --resource-group <rg-name> --name <cluster-name>
@@ -207,7 +242,7 @@ kubectl get pods -n cnpg-database
 kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
 ```
 
-### Step 5: Test Connections
+### Step 6: Test Connections
 ```bash
 # Test via PgBouncer pooler (Recommended for applications)
 kubectl port-forward svc/pg-primary-pooler-rw 5432:5432 -n cnpg-database &
@@ -218,7 +253,7 @@ kubectl port-forward svc/pg-primary-rw 5433:5432 -n cnpg-database &
 psql -h localhost -p 5433 -U app -d appdb
 ```
 
-### Step 6: Run Performance Tests
+### Step 7: Run Performance Tests
 ```bash
 # Run comprehensive pgbench test (tests both direct and pooler)
 ./scripts/07-test-pgbench.sh

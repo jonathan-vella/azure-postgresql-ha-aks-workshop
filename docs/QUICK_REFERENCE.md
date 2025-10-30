@@ -46,7 +46,25 @@ source config/environment-variables.sh
 
 > **Key Concept**: The command loads configuration into your active terminal session, making variables like `$RESOURCE_GROUP_NAME`, `$AKS_CLUSTER_VERSION`, and `$DISK_IOPS` available to deployment scripts. Without this step, scripts won't know what values to use.
 
-## 🔍 Verify Deployment
+## ✅ Validate Deployment
+
+### Comprehensive Validation (Recommended)
+```bash
+# Run automated validation (20+ tests)
+./scripts/07a-validate-cluster.sh
+```
+
+**Tests:**
+- Cluster status & HA configuration
+- Multi-zone pod distribution
+- Service endpoints
+- PostgreSQL connectivity (primary/replicas)
+- Data write & replication (RPO=0)
+- PgBouncer pooler (3 instances)
+- WAL archiving & backups
+- Monitoring configuration
+
+## 🔍 Manual Verification
 
 ```bash
 # Get credentials
