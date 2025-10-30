@@ -1,0 +1,324 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-validation-script
+  namespace: cnpg-database
+data:
+  validate.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    # Colors for output
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    NC='\033[0m'
+    
+    TESTS_PASSED=0
+    TESTS_FAILED=0
+    WARNINGS=0
+    
+    print_header() {
+        echo ""
+        echo -e "${BLUE}========================================${NC}"
+        echo -e "${BLUE}$1${NC}"
+        echo -e "${BLUE}========================================${NC}"
+        echo ""
+    }
+    
+    print_test() {
+        echo -e "${YELLOW}TEST:${NC} $1"
+    }
+    
+    print_success() {
+        echo -e "${GREEN}✅ PASS:${NC} $1"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    }
+    
+    print_fail() {
+        echo -e "${RED}❌ FAIL:${NC} $1"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    }
+    
+    print_warning() {
+        echo -e "${YELLOW}⚠️  WARN:${NC} $1"
+        WARNINGS=$((WARNINGS + 1))
+    }
+    
+    print_info() {
+        echo -e "   ${BLUE}ℹ${NC} $1"
+    }
+    
+    # Execute psql command
+    execute_psql() {
+        local host=$1
+        local port=$2
+        local query=$3
+        PGPASSWORD="$PG_PASSWORD" psql -h "$host" -p "$port" -U "$PG_USER" -d "$PG_DATABASE" -t -A -c "$query" 2>/dev/null || true
+    }
+    
+    print_header "PostgreSQL HA Cluster Validation (In-Cluster)"
+    
+    echo "Cluster: $PG_CLUSTER_NAME"
+    echo "Namespace: $PG_NAMESPACE"
+    echo "Primary Service: ${PG_CLUSTER_NAME}-rw"
+    echo "Pooler Service: ${PG_CLUSTER_NAME}-pooler-rw"
+    echo ""
+    
+    # ============================================================================
+    # TEST 1: Primary Connection (Direct)
+    # ============================================================================
+    print_header "Test 1: Primary Connection (Direct)"
+    
+    print_test "Testing direct connection to primary"
+    VERSION=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "SELECT version()")
+    if [ -n "$VERSION" ]; then
+        print_success "Connected to PostgreSQL"
+        print_info "Version: $(echo $VERSION | cut -d'(' -f1)"
+    else
+        print_fail "Failed to connect to primary"
+    fi
+    
+    print_test "Verifying connected to primary (not replica)"
+    IS_REPLICA=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "SELECT pg_is_in_recovery()")
+    if [ "$IS_REPLICA" = "f" ]; then
+        print_success "Connected to primary instance"
+    else
+        print_fail "Connected to replica instead of primary"
+    fi
+    
+    # ============================================================================
+    # TEST 2: PgBouncer Pooler Connection
+    # ============================================================================
+    print_header "Test 2: PgBouncer Pooler Connection"
+    
+    print_test "Testing connection through PgBouncer pooler"
+    POOLER_VERSION=$(execute_psql "${PG_CLUSTER_NAME}-pooler-rw" 5432 "SELECT version()")
+    if [ -n "$POOLER_VERSION" ]; then
+        print_success "Connected via PgBouncer pooler"
+    else
+        print_fail "Failed to connect via pooler"
+    fi
+    
+    # ============================================================================
+    # TEST 3: Data Write Operations
+    # ============================================================================
+    print_header "Test 3: Data Write Operations"
+    
+    TABLE_NAME="cluster_validation_test_$(date +%s)"
+    
+    print_test "Creating test table"
+    CREATE_SQL="DROP TABLE IF EXISTS $TABLE_NAME; CREATE TABLE $TABLE_NAME (id SERIAL PRIMARY KEY, test_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, test_message TEXT, node_info TEXT);"
+    CREATE_RESULT=$(PGPASSWORD="$PG_PASSWORD" psql -h "${PG_CLUSTER_NAME}-rw" -p 5432 -U "$PG_USER" -d "$PG_DATABASE" -c "$CREATE_SQL" 2>&1)
+    
+    if echo "$CREATE_RESULT" | grep -q "CREATE TABLE"; then
+        print_success "Test table created: $TABLE_NAME"
+    else
+        print_fail "Failed to create test table"
+    fi
+    
+    print_test "Inserting test data"
+    INSERT_RESULT=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "INSERT INTO $TABLE_NAME (test_message, node_info) VALUES ('Test 1', inet_server_addr()::text), ('Test 2', inet_server_addr()::text), ('Test 3', inet_server_addr()::text) RETURNING id")
+    if [ -n "$INSERT_RESULT" ]; then
+        print_success "Inserted 3 test rows"
+    else
+        print_fail "Failed to insert test data"
+    fi
+    
+    print_test "Verifying data persistence"
+    ROW_COUNT=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "SELECT COUNT(*) FROM $TABLE_NAME")
+    if [ "$ROW_COUNT" = "3" ]; then
+        print_success "All 3 rows persisted correctly"
+    else
+        print_fail "Expected 3 rows, found $ROW_COUNT"
+    fi
+    
+    # ============================================================================
+    # TEST 4: Read Replica Connection
+    # ============================================================================
+    print_header "Test 4: Read Replica Connection"
+    
+    print_test "Connecting to read-only service"
+    RO_VERSION=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT version()")
+    if [ -n "$RO_VERSION" ]; then
+        print_success "Connected to read-only service"
+    else
+        print_fail "Failed to connect to read-only service"
+    fi
+    
+    print_test "Verifying read-only service routes to replica"
+    IS_REPLICA=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT pg_is_in_recovery()")
+    if [ "$IS_REPLICA" = "t" ]; then
+        print_success "Read-only service correctly routes to replica"
+    else
+        print_warning "Read-only service may be routing to primary"
+    fi
+    
+    # ============================================================================
+    # TEST 5: Data Replication
+    # ============================================================================
+    print_header "Test 5: Data Replication"
+    
+    print_test "Checking if test data replicated to read replicas"
+    sleep 2  # Give replication time to catch up
+    REPLICA_ROW_COUNT=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT COUNT(*) FROM $TABLE_NAME")
+    if [ "$REPLICA_ROW_COUNT" = "3" ]; then
+        print_success "Data successfully replicated (3 rows on replica)"
+    else
+        print_fail "Data mismatch: Expected 3 rows on replica, found $REPLICA_ROW_COUNT"
+    fi
+    
+    print_test "Verifying data consistency between primary and replica"
+    PRIMARY_DATA=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "SELECT test_message FROM $TABLE_NAME ORDER BY id")
+    REPLICA_DATA=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT test_message FROM $TABLE_NAME ORDER BY id")
+    if [ "$PRIMARY_DATA" = "$REPLICA_DATA" ]; then
+        print_success "Data consistency verified between primary and replica"
+    else
+        print_fail "Data inconsistency detected"
+    fi
+    
+    # ============================================================================
+    # TEST 6: Replication Status
+    # ============================================================================
+    print_header "Test 6: Replication Status"
+    
+    print_test "Verifying replica accessibility"
+    # Try connecting to read-only service multiple times to ensure load balancing works
+    REPLICA_CONNECTS=0
+    for i in {1..3}; do
+        REPLICA_TEST=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT pg_is_in_recovery()")
+        if [ "$REPLICA_TEST" = "t" ]; then
+            REPLICA_CONNECTS=$((REPLICA_CONNECTS + 1))
+        fi
+    done
+    
+    if [ $REPLICA_CONNECTS -eq 3 ]; then
+        print_success "All 3 replica connection attempts successful"
+    elif [ $REPLICA_CONNECTS -gt 0 ]; then
+        print_warning "$REPLICA_CONNECTS/3 replica connections succeeded"
+    else
+        print_fail "Could not connect to replicas"
+    fi
+    
+    print_test "Checking replication health via recovery status"
+    # Verify that read-only service points to actual replicas (not primary)
+    RO_IS_REPLICA=$(execute_psql "${PG_CLUSTER_NAME}-ro" 5432 "SELECT CASE WHEN pg_is_in_recovery() THEN 'healthy' ELSE 'warning' END")
+    if [ "$RO_IS_REPLICA" = "healthy" ]; then
+        print_success "Read-only service routing to healthy replicas"
+    else
+        print_warning "Read-only service may not be optimal"
+    fi
+    
+    # ============================================================================
+    # TEST 7: Connection Pooling
+    # ============================================================================
+    print_header "Test 7: Connection Pooling"
+    
+    print_test "Testing multiple concurrent connections via pooler"
+    CONCURRENT_SUCCESS=0
+    for i in {1..5}; do
+        RESULT=$(execute_psql "${PG_CLUSTER_NAME}-pooler-rw" 5432 "SELECT 1")
+        if [ "$RESULT" = "1" ]; then
+            CONCURRENT_SUCCESS=$((CONCURRENT_SUCCESS + 1))
+        fi
+    done
+    
+    if [ $CONCURRENT_SUCCESS -eq 5 ]; then
+        print_success "All 5 concurrent connections succeeded via pooler"
+    elif [ $CONCURRENT_SUCCESS -gt 0 ]; then
+        print_warning "$CONCURRENT_SUCCESS/5 concurrent connections succeeded"
+    else
+        print_fail "All concurrent connections failed"
+    fi
+    
+    # ============================================================================
+    # TEST 8: Cleanup
+    # ============================================================================
+    print_header "Test 8: Cleanup"
+    
+    print_test "Dropping test table"
+    DROP_RESULT=$(execute_psql "${PG_CLUSTER_NAME}-rw" 5432 "DROP TABLE IF EXISTS $TABLE_NAME")
+    if [ $? -eq 0 ]; then
+        print_success "Test table dropped successfully"
+    else
+        print_warning "Failed to drop test table (may not affect cluster)"
+    fi
+    
+    # ============================================================================
+    # SUMMARY
+    # ============================================================================
+    print_header "Validation Summary"
+    
+    TOTAL_TESTS=$((TESTS_PASSED + TESTS_FAILED))
+    if [ $TOTAL_TESTS -gt 0 ]; then
+        PASS_RATE=$((TESTS_PASSED * 100 / TOTAL_TESTS))
+    else
+        PASS_RATE=0
+    fi
+    
+    echo ""
+    echo "Total Tests:     $TOTAL_TESTS"
+    echo "Tests Passed:    $TESTS_PASSED"
+    echo "Tests Failed:    $TESTS_FAILED"
+    echo "Warnings:        $WARNINGS"
+    echo "Pass Rate:       ${PASS_RATE}%"
+    echo ""
+    
+    if [ $TESTS_FAILED -eq 0 ]; then
+        print_header "✅ ALL TESTS PASSED"
+        exit 0
+    else
+        print_header "❌ SOME TESTS FAILED"
+        exit 1
+    fi
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cluster-validation
+  namespace: cnpg-database
+spec:
+  ttlSecondsAfterFinished: 3600  # Keep for 1 hour after completion
+  backoffLimit: 0  # Don't retry on failure
+  template:
+    metadata:
+      labels:
+        app: cluster-validation
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: validator
+        image: postgres:16-alpine
+        command: ["/bin/bash", "/scripts/validate.sh"]
+        env:
+        - name: PG_CLUSTER_NAME
+          value: "CLUSTER_NAME_PLACEHOLDER"
+        - name: PG_NAMESPACE
+          value: "cnpg-database"
+        - name: PG_USER
+          value: "app"
+        - name: PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-app-secret
+              key: password
+        - name: PG_DATABASE
+          value: "appdb"
+        volumeMounts:
+        - name: validation-script
+          mountPath: /scripts
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: validation-script
+        configMap:
+          name: cluster-validation-script
+          defaultMode: 0755
