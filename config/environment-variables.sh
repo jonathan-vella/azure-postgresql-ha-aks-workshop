@@ -49,7 +49,7 @@ export STORAGECLASS_NAME="managed-csi-premium-v2"  # Alias for script compatibil
 
 # Storage configuration (Premium SSD v2 - Optimized for 10K TPS)
 export DISK_IOPS="${DISK_IOPS:-40000}"      # Max Premium SSD v2 IOPS
-export DISK_THROUGHPUT="${DISK_THROUGHPUT:-1250}"  # Max Premium SSD v2 throughput (MB/s)
+export DISK_THROUGHPUT="${DISK_THROUGHPUT:-1200}"  # Max Premium SSD v2 throughput (MB/s)
 export PG_STORAGE_SIZE="${PG_STORAGE_SIZE:-200Gi}"  # Increased for better performance
 
 # PostgreSQL database configuration

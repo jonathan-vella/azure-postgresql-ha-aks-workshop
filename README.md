@@ -495,7 +495,7 @@ USER_NODE_POOL_VMSKU="Standard_E8as_v6"
 
 # Storage (Premium SSD v2 - Optimized for 10K TPS)
 DISK_IOPS="40000"              # Max Premium SSD v2 IOPS
-DISK_THROUGHPUT="1250"         # Max Premium SSD v2 throughput (MB/s)
+DISK_THROUGHPUT="1200"         # Max Premium SSD v2 throughput (MB/s)
 PG_STORAGE_SIZE="200Gi"        # Increased for better performance
 
 # PostgreSQL (Optimized for Standard_E8as_v6)

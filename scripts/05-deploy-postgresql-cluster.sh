@@ -133,7 +133,7 @@ spec:
       checkpoint_timeout: "15min"                # Longer intervals for sustained workloads
       checkpoint_flush_after: "256kB"            # Max allowed value
       
-      # I/O performance tuning (Premium SSD v2: 40K IOPS, 1250 MB/s)
+      # I/O performance tuning (Premium SSD v2: 40K IOPS, 1200 MB/s)
       random_page_cost: "1.1"                    # Optimized for Premium SSD v2
       effective_io_concurrency: "200"            # High for Premium SSD v2
       maintenance_io_concurrency: "200"          # Parallel maintenance I/O

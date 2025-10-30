@@ -67,7 +67,7 @@ export STORAGECLASS_NAME="managed-csi-premium-v2"
 
 # Storage configuration (Premium SSD v2)
 export DISK_IOPS="\${DISK_IOPS:-40000}"
-export DISK_THROUGHPUT="\${DISK_THROUGHPUT:-1250}"
+export DISK_THROUGHPUT="\${DISK_THROUGHPUT:-1200}"
 export PG_STORAGE_SIZE="\${PG_STORAGE_SIZE:-200Gi}"
 
 # PostgreSQL database configuration

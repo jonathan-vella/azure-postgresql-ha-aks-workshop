@@ -71,7 +71,7 @@ USER_NODE_POOL_VMSKU="Standard_E8as_v6"  # 8 vCPU, 64 GB RAM, AMD EPYC 9004
 
 # Storage (Premium v2 - high performance configuration)
 DISK_IOPS="40000"           # Max: 80,000 IOPS
-DISK_THROUGHPUT="1250"      # Max: 1,200 MB/s (increased for high throughput)
+DISK_THROUGHPUT="1200"      # Max: 1,200 MB/s (increased for high throughput)
 PG_STORAGE_SIZE="200Gi"     # 200 GB per instance
 
 # PostgreSQL resources (aligned with E8as_v6 hardware)
@@ -166,7 +166,7 @@ Adjust these in `config/environment-variables.sh`:
 
 ```bash
 DISK_IOPS="40000"
-DISK_THROUGHPUT="1250"
+DISK_THROUGHPUT="1200"
 PG_STORAGE_SIZE="200Gi"
 ```
 

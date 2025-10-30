@@ -91,7 +91,7 @@ Edit in `config/environment-variables.sh`:
 
 ### Storage (Premium v2 - High Performance)
 - **IOPS**: `DISK_IOPS="40000"` (range: 3,100-80,000)
-- **Throughput**: `DISK_THROUGHPUT="1250"` MB/s (range: 125-1,200 MB/s)
+- **Throughput**: `DISK_THROUGHPUT="1200"` MB/s (range: 125-1,200 MB/s)
 - **Size**: `PG_STORAGE_SIZE="200Gi"` per instance
 
 ### PostgreSQL

@@ -376,7 +376,7 @@ USER_NODE_POOL_VMSKU="Standard_E8as_v6"       # PostgreSQL pool VM (8 vCPU, 64 G
 
 # Storage (Premium v2 - High Performance)
 DISK_IOPS="40000"                             # Adjust IOPS (3100-80000)
-DISK_THROUGHPUT="1250"                        # Adjust throughput (125-1200 MB/s)
+DISK_THROUGHPUT="1200"                        # Adjust throughput (125-1200 MB/s)
 PG_STORAGE_SIZE="200Gi"                       # Adjust storage size
 
 # PostgreSQL (Tuned for E8as_v6)
