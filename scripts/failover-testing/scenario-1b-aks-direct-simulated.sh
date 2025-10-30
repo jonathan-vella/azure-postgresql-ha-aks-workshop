@@ -79,6 +79,8 @@ metadata:
   namespace: cnpg-database
 spec:
   restartPolicy: Never
+  nodeSelector:
+    agentpool: systempool
   containers:
   - name: pgbench
     image: postgres:17

@@ -11,6 +11,7 @@ echo ""
 echo "📦 Installing additional tools..."
 apt-get update && apt-get install -y \
     jq \
+    bc \
     openssl \
     git \
     make \
@@ -27,7 +28,7 @@ apt-get update && apt-get install -y \
     postgresql-client \
     > /dev/null 2>&1
 
-echo "✓ System tools installed (including postgresql-client)"
+echo "✓ System tools installed (including postgresql-client and bc)"
 echo ""
 
 # Install CNPG kubectl plugin
@@ -77,6 +78,7 @@ echo "  Azure CLI:     $(az version --query '"azure-cli"' -o tsv)"
 echo "  kubectl:       $(kubectl version --client -o json 2>/dev/null | jq -r '.clientVersion.gitVersion')"
 echo "  Helm:          $(helm version --short | cut -d'+' -f1)"
 echo "  jq:            $(jq --version)"
+echo "  bc:            $(bc --version | head -1 | cut -d' ' -f1-2)"
 echo "  psql:          $(psql --version | cut -d' ' -f3)"
 echo "  netcat:        $(nc -h 2>&1 | head -1 | cut -d' ' -f1-2)"
 echo "  CNPG plugin:   v1.27.1"
@@ -91,6 +93,7 @@ echo "  • Azure CLI (az)          - Azure cloud management"
 echo "  • kubectl                  - Kubernetes CLI"
 echo "  • Helm                     - Kubernetes package manager"
 echo "  • jq                       - JSON processor"
+echo "  • bc                       - Command-line calculator"
 echo "  • psql                     - PostgreSQL client"
 echo "  • netcat (nc)              - Network testing"
 echo "  • kubectl-cnpg             - CloudNativePG plugin"

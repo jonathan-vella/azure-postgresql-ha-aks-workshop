@@ -96,6 +96,8 @@ spec:
         app: pgbench-client-scenario2b
     spec:
       restartPolicy: Always
+      nodeSelector:
+        agentpool: systempool
       containers:
       - name: pgbench
         image: postgres:17
