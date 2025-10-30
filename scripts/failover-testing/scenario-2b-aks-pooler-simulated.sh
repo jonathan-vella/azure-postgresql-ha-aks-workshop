@@ -86,7 +86,7 @@ spec:
       echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
       pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=simple \
         --file=/workload/payment-gateway-workload.sql --rate=10000 --time=300 \
-        --clients=100 --threads=4 \
+        -c 100 -j 4 \
         --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
       echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
     env:
