@@ -3,9 +3,8 @@
 #######################################
 # Import Grafana Dashboard with Correct Datasource
 # This script:
-# 1. Retrieves the Azure Monitor datasource UID from Grafana
-# 2. Updates the dashboard JSON with the correct datasource
-# 3. Imports the dashboard via Grafana API
+# 1. Provides instructions for manual dashboard import (most reliable)
+# 2. Optionally attempts automated import via Grafana API
 #######################################
 
 set -e
@@ -39,9 +38,8 @@ DASHBOARD_FILE="${PROJECT_ROOT}/grafana/grafana-cnpg-ha-dashboard.json"
 TEMP_DASHBOARD="/tmp/grafana-dashboard-configured.json"
 
 echo -e "\n${BLUE}=== Step 1: Get Grafana Endpoint ===${NC}"
-GRAFANA_ENDPOINT=$(az grafana show \
-    --name "${GRAFANA_NAME}" \
-    --resource-group "${RESOURCE_GROUP}" \
+GRAFANA_ENDPOINT=$(az resource show \
+    --ids "${GRAFANA_RESOURCE_ID}" \
     --query "properties.endpoint" \
     -o tsv)
 
@@ -52,49 +50,47 @@ fi
 
 echo "Grafana URL: ${GRAFANA_ENDPOINT}"
 
-echo -e "\n${BLUE}=== Step 2: Get Access Token ===${NC}"
-# Azure Managed Grafana resource ID for token
-GRAFANA_RESOURCE_ID="ce34e7e5-485f-4d76-964f-b3d2b16d1e5f"
-TOKEN=$(az account get-access-token \
-    --resource "${GRAFANA_RESOURCE_ID}" \
-    --query accessToken \
-    -o tsv)
+echo -e "\n${BLUE}=== Step 2: Get Prometheus Datasource UID ===${NC}"
 
-if [ -z "$TOKEN" ]; then
-    echo -e "${RED}Error: Could not retrieve access token${NC}"
-    exit 1
-fi
+# The dashboard needs the Prometheus datasource (not Azure Monitor datasource)
+# Azure Monitor = for KQL queries on Azure infrastructure
+# Managed Prometheus = for PromQL queries on CNPG application metrics
+EXPECTED_DS_NAME="Managed_Prometheus_amw-cnpg-${SUFFIX}"
+echo "Looking for Prometheus datasource: ${EXPECTED_DS_NAME}"
 
-echo "✓ Access token retrieved"
+# Use Azure CLI to get datasources (more reliable than API)
+DATASOURCE_INFO=$(az grafana data-source list \
+    --name "grafana-cnpg-${SUFFIX}" \
+    --resource-group "${RESOURCE_GROUP}" \
+    --query "[?contains(name, 'Managed_Prometheus')].{name:name, uid:uid, type:typeName}" \
+    -o json 2>/dev/null)
 
-echo -e "\n${BLUE}=== Step 3: Get Azure Monitor Datasource UID ===${NC}"
-DATASOURCES=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
-    "${GRAFANA_ENDPOINT}/api/datasources" 2>/dev/null)
-
-if [ -z "$DATASOURCES" ]; then
-    echo -e "${RED}Error: Could not retrieve datasources from Grafana${NC}"
-    exit 1
-fi
-
-# Find Azure Monitor Prometheus datasource
-DATASOURCE_UID=$(echo "$DATASOURCES" | jq -r '.[] | select(.type=="prometheus" and (.name | contains("Azure Monitor") or contains("azure-monitor") or contains("amw-"))) | .uid' | head -1)
-
-if [ -z "$DATASOURCE_UID" ]; then
-    echo -e "${YELLOW}Warning: Azure Monitor datasource not found. Searching for any Prometheus datasource...${NC}"
-    DATASOURCE_UID=$(echo "$DATASOURCES" | jq -r '.[] | select(.type=="prometheus") | .uid' | head -1)
-fi
-
-if [ -z "$DATASOURCE_UID" ]; then
-    echo -e "${RED}Error: No Prometheus datasource found in Grafana${NC}"
+if [ -z "$DATASOURCE_INFO" ] || [ "$DATASOURCE_INFO" = "[]" ]; then
+    echo -e "${RED}Error: Managed Prometheus datasource not found${NC}"
+    echo "Expected: ${EXPECTED_DS_NAME}"
+    echo ""
     echo "Available datasources:"
-    echo "$DATASOURCES" | jq -r '.[] | "\(.name) (\(.type)) - UID: \(.uid)"'
+    az grafana data-source list \
+        --name "grafana-cnpg-${SUFFIX}" \
+        --resource-group "${RESOURCE_GROUP}" \
+        --query "[].{Name:name, Type:typeName, Default:isDefault}" \
+        -o table 2>/dev/null
     exit 1
 fi
 
-DATASOURCE_NAME=$(echo "$DATASOURCES" | jq -r ".[] | select(.uid==\"${DATASOURCE_UID}\") | .name")
-echo "✓ Found datasource: ${DATASOURCE_NAME} (UID: ${DATASOURCE_UID})"
+DATASOURCE_UID=$(echo "$DATASOURCE_INFO" | jq -r '.[0].uid')
+DATASOURCE_NAME=$(echo "$DATASOURCE_INFO" | jq -r '.[0].name')
 
-echo -e "\n${BLUE}=== Step 4: Configure Dashboard JSON ===${NC}"
+if [ -z "$DATASOURCE_UID" ] || [ "$DATASOURCE_UID" = "null" ]; then
+    echo -e "${RED}Error: Could not extract datasource UID${NC}"
+    exit 1
+fi
+
+echo "✓ Found Prometheus datasource: ${DATASOURCE_NAME}"
+echo "  UID: ${DATASOURCE_UID}"
+echo "  Note: This is the Managed Prometheus endpoint for CNPG metrics (not the Azure Monitor datasource)"
+
+echo -e "\n${BLUE}=== Step 3: Configure Dashboard JSON ===${NC}"
 if [ ! -f "$DASHBOARD_FILE" ]; then
     echo -e "${RED}Error: Dashboard file not found: ${DASHBOARD_FILE}${NC}"
     exit 1
@@ -151,45 +147,28 @@ jq --arg uid "$DATASOURCE_UID" '
 
 echo "✓ Dashboard configured with datasource UID: ${DATASOURCE_UID}"
 
-echo -e "\n${BLUE}=== Step 5: Import Dashboard to Grafana ===${NC}"
+echo -e "\n${BLUE}=== Step 4: Import Dashboard to Grafana ===${NC}"
 
-# Wrap dashboard JSON in required format for import API
-IMPORT_PAYLOAD=$(jq -n \
-  --arg uid "$DATASOURCE_UID" \
-  --slurpfile dashboard "$TEMP_DASHBOARD" \
-  '{
-    "dashboard": $dashboard[0],
-    "overwrite": true,
-    "inputs": [
-      {
-        "name": "DS_PROMETHEUS",
-        "type": "datasource",
-        "pluginId": "prometheus",
-        "value": $uid
-      }
-    ]
-  }')
-
-# Import dashboard
-IMPORT_RESPONSE=$(curl -s -X POST \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d "$IMPORT_PAYLOAD" \
-  "${GRAFANA_ENDPOINT}/api/dashboards/import" 2>/dev/null)
+# Import dashboard using Azure CLI (more reliable than API)
+IMPORT_RESPONSE=$(az grafana dashboard create \
+    --name "grafana-cnpg-${SUFFIX}" \
+    --resource-group "${RESOURCE_GROUP}" \
+    --title "CloudNativePG - Load Testing & Failover" \
+    --definition @"${TEMP_DASHBOARD}" \
+    --overwrite \
+    -o json 2>&1)
 
 # Check if import was successful
-IMPORT_STATUS=$(echo "$IMPORT_RESPONSE" | jq -r '.status // empty')
-DASHBOARD_UID=$(echo "$IMPORT_RESPONSE" | jq -r '.uid // empty')
-DASHBOARD_URL=$(echo "$IMPORT_RESPONSE" | jq -r '.url // empty')
-
-if [ -n "$DASHBOARD_UID" ] || echo "$IMPORT_RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Dashboard imported successfully!${NC}"
+if echo "$IMPORT_RESPONSE" | jq -e '.uid' > /dev/null 2>&1; then
+    DASHBOARD_UID=$(echo "$IMPORT_RESPONSE" | jq -r '.uid')
+    DASHBOARD_SLUG=$(echo "$IMPORT_RESPONSE" | jq -r '.slug')
+    DASHBOARD_ID=$(echo "$IMPORT_RESPONSE" | jq -r '.id')
     
-    if [ -n "$DASHBOARD_URL" ]; then
-        FULL_URL="${GRAFANA_ENDPOINT}${DASHBOARD_URL}"
-    else
-        FULL_URL="${GRAFANA_ENDPOINT}/d/${DASHBOARD_UID}/cloudnativepg-load-testing-failover-dashboard"
-    fi
+    echo -e "${GREEN}✓ Dashboard imported successfully!${NC}"
+    echo "  Dashboard UID: ${DASHBOARD_UID}"
+    echo "  Dashboard ID: ${DASHBOARD_ID}"
+    
+    FULL_URL="${GRAFANA_ENDPOINT}/d/${DASHBOARD_UID}/${DASHBOARD_SLUG}"
     
     echo -e "\n${GREEN}=== Dashboard Ready ===${NC}"
     echo "Dashboard URL: ${FULL_URL}"
@@ -199,17 +178,6 @@ if [ -n "$DASHBOARD_UID" ] || echo "$IMPORT_RESPONSE" | jq -e '.id' > /dev/null 
 else
     echo -e "${RED}Error: Dashboard import failed${NC}"
     echo "Response: $IMPORT_RESPONSE"
-    
-    # Check if it's a permissions error
-    if echo "$IMPORT_RESPONSE" | grep -q "403\|Forbidden\|Unauthorized"; then
-        echo -e "\n${YELLOW}Troubleshooting: Permissions Issue${NC}"
-        echo "1. Ensure you have Grafana Admin role:"
-        echo "   az role assignment create --role 'Grafana Admin' \\"
-        echo "     --assignee-object-id \$(az ad signed-in-user show --query id -o tsv) \\"
-        echo "     --scope '${GRAFANA_RESOURCE_ID}'"
-        echo ""
-        echo "2. Wait 1-2 minutes for role assignment to propagate, then re-run this script"
-    fi
     exit 1
 fi
 
