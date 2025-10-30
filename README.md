@@ -138,15 +138,23 @@ graph TB
 
 ### Option A: Use DevContainer (Recommended, Tested, Validated) 🐳
 
-All tools pre-installed in isolated container:
+All tools pre-installed in isolated container with auto-generated environment:
 
 ```bash
 # Requirements: Docker Desktop + VS Code Remote - Containers extension
 # 1. Open project in VS Code
 # 2. Ctrl+Shift+P -> "Dev Containers: Reopen in Container"
 # 3. Wait for build (2-5 min first time)
-# 4. Tools ready: az, kubectl, helm, jq, openssl
+# 4. .env file auto-generated with unique resource names
+# 5. Tools ready: az, kubectl, helm, jq, bc, psql, netcat, kubectl-cnpg (v1.27.1)
 ```
+
+**Key Features**:
+- Auto-generates `.env` with unique suffix and resource names
+- CNPG kubectl plugin v1.27.1 pre-installed
+- PostgreSQL client (psql) for testing
+- Network tools (netcat) for connectivity testing
+- Calculator (bc) for pgbench metrics
 
 See `.devcontainer/README.md` for detailed setup.
 
@@ -158,6 +166,22 @@ See `.devcontainer/README.md` for detailed setup.
 - Region with Premium v2 disk support
 
 ### 1️⃣ Configure
+
+**Option A: DevContainer (Recommended)**
+```bash
+# .env is auto-generated when container starts
+# Contains unique suffix and all resource names
+source .env
+
+# Verify configuration
+echo "Resource Group: $RESOURCE_GROUP_NAME"
+echo "AKS Cluster: $AKS_PRIMARY_CLUSTER_NAME"
+
+# Optional: Regenerate with new suffix
+./scripts/regenerate-env.sh
+```
+
+**Option B: Manual Setup**
 ```bash
 # Clone repository
 git clone <repo-url>
@@ -168,16 +192,27 @@ code config/environment-variables.sh
 ```
 
 ### 2️⃣ Deploy
+
+**Using DevContainer**:
+```bash
+# Load auto-generated environment variables
+source .env
+
+# Deploy all components (8 automated steps)
+./scripts/deploy-all.sh
+```
+
+**Using Manual Setup**:
 ```bash
 # Load environment variables into current shell session
 # This makes all configuration values available to deployment scripts
 source config/environment-variables.sh
 
-# Deploy all components (7 automated steps)
+# Deploy all components (8 automated steps)
 ./scripts/deploy-all.sh
 ```
 
-> **What does this do?** The `source` command loads all configuration variables (like resource names, regions, VM sizes) from the config file into your current terminal session. This allows the deployment scripts to access these values without hardcoding them.
+> **What does this do?** The `source` command loads all configuration variables (like resource names, regions, VM sizes) into your current terminal session. This allows the deployment scripts to access these values without hardcoding them. In DevContainer, `.env` is auto-generated with unique resource names; otherwise, use `config/environment-variables.sh`.
 
 ### 3️⃣ Verify
 ```bash
@@ -238,8 +273,13 @@ psql -h localhost -U app -d appdb
 
 ### ⚙️ Configuration
 ```
+.env                           - Auto-generated (DevContainer only, gitignored)
+    - Unique suffix for resource names
+    - All Azure resource names pre-configured
+    - Generated at devcontainer startup
+
 config/
-└── environment-variables.sh   - Bash environment configuration
+└── environment-variables.sh   - Bash environment configuration template
     - Resource names with random suffix
     - AKS settings (version, VM sizes)
     - Storage configuration (IOPS, throughput)
@@ -250,16 +290,19 @@ config/
 ### 🚀 Deployment Scripts
 ```
 scripts/
+├── deploy-all.sh                       - Master orchestration script (8 steps with logging)
+├── regenerate-env.sh                   - ⭐ Regenerate .env with new suffix (DevContainer)
+├── setup-prerequisites.sh              - ⭐ Install required tools (non-DevContainer)
 ├── 02-create-infrastructure.sh         - Creates Azure resources (RG, AKS, Storage, Identity, Bastion, NAT Gateway, Container Insights)
 ├── 03-configure-workload-identity.sh   - Sets up federated credentials
-├── 04-deploy-cnpg-operator.sh          - Installs CloudNativePG operator via Helm
-├── 04a-install-barman-cloud-plugin.sh  - Installs Barman Cloud Plugin for backup/restore
+├── 04-deploy-cnpg-operator.sh          - Installs CloudNativePG operator v1.27.1 via Helm
+├── 04a-install-barman-cloud-plugin.sh  - Installs Barman Cloud Plugin v0.8.0 for backup/restore
 ├── 05-deploy-postgresql-cluster.sh     - Deploys PostgreSQL cluster + PgBouncer pooler + PodMonitor
 ├── 06-configure-monitoring.sh          - Configures Azure Managed Grafana
 ├── 06a-configure-azure-monitor-prometheus.sh - Configures Azure Monitor Managed Prometheus
+├── 06b-import-grafana-dashboard.sh     - ⭐ Import Grafana dashboard automatically
 ├── 07-display-connection-info.sh       - Displays connection endpoints and credentials
-├── 07a-run-cluster-validation.sh       - ⭐ In-cluster validation (100% pass rate, 7s execution)
-└── deploy-all.sh                       - Master orchestration script (8 steps)
+└── 07a-run-cluster-validation.sh       - ⭐ In-cluster validation (100% pass rate, 7s execution)
 ```
 
 ### ⚙️ Kubernetes Reference

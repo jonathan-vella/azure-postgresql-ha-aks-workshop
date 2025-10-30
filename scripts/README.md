@@ -26,19 +26,21 @@ source ../config/environment-variables.sh
 
 | Script | Purpose | Duration | Dependencies |
 |--------|---------|----------|--------------|
-| **deploy-all.sh** | Master orchestration - runs steps 2-7 | 20-30 min | All scripts below |
+| **deploy-all.sh** | Master orchestration - runs steps 2-7 with logging | 20-30 min | All scripts below |
+| **setup-prerequisites.sh** | ⭐ Installs required tools (az, kubectl, helm, jq, etc.) | 5-10 min | None (run first for manual setup) |
+| **regenerate-env.sh** | ⭐ Regenerates .env with new suffix (backs up old .env) | <1 min | DevContainer only |
 | **02-create-infrastructure.sh** | Creates Azure resources (RG, AKS, Storage, Identity, Container Insights, Bastion, NAT) | 10-15 min | Azure CLI, environment variables |
 | **03-configure-workload-identity.sh** | Sets up federated credentials for backup access | 1-2 min | Script 02 completed |
-| **04-deploy-cnpg-operator.sh** | Installs CloudNativePG operator via Helm | 2-3 min | AKS cluster ready |
+| **04-deploy-cnpg-operator.sh** | Installs CloudNativePG operator v1.27.1 via Helm | 2-3 min | AKS cluster ready |
 | **04a-install-barman-cloud-plugin.sh** | Installs Barman Cloud Plugin v0.8.0 for backups | 1 min | CNPG operator installed |
 | **05-deploy-postgresql-cluster.sh** | Deploys PostgreSQL HA (3 nodes) + PgBouncer (3 instances) + PodMonitor | 5-10 min | All previous scripts |
 | **06-configure-monitoring.sh** | Configures Azure Managed Grafana | 2-3 min | Cluster deployed |
 | **06a-configure-azure-monitor-prometheus.sh** | Configures Azure Monitor Managed Prometheus scraping | 2-3 min | Cluster deployed |
+| **06b-import-grafana-dashboard.sh** | ⭐ Automated Grafana dashboard import | <1 min | Grafana configured |
 | **07-display-connection-info.sh** | Shows connection endpoints and credentials | <1 min | Cluster deployed |
 | **07a-run-cluster-validation.sh** | **In-cluster validation (14 tests, 100% pass, Kubernetes Job)** | **~7 sec** | **Cluster deployed** |
 | **08-test-pgbench.sh** | Runs pgbench load test | Variable | Cluster deployed |
-| **regenerate-env.sh** | **Regenerates .env with new suffix (backs up old .env)** | **<1 min** | **None** |
-| **setup-prerequisites.sh** | Installs required tools (az, kubectl, helm, etc.) | 5-10 min | None (run first) |
+| **08a-test-pgbench-high-load.sh** | ⭐ High load pgbench test (8K-10K TPS target) | Variable | Cluster deployed |
 
 ---
 
@@ -46,26 +48,37 @@ source ../config/environment-variables.sh
 
 ### `deploy-all.sh` - Master Orchestration
 
-**Purpose**: Runs all deployment steps in sequence (steps 2-7).
+**Purpose**: Runs all deployment steps in sequence (steps 2-7) with automatic logging.
 
 **What it does**:
-1. Validates environment variables are loaded
-2. Runs infrastructure creation (step 2) - includes Container Insights
-3. Configures workload identity (step 3)
-4. Installs CNPG operator (step 4)
-5. Installs Barman Cloud Plugin (step 4a)
-6. Deploys PostgreSQL cluster (step 5)
-7. Configures Grafana monitoring (step 6)
-8. Configures Azure Monitor Managed Prometheus (step 6a)
-9. Displays connection info (step 7)
+1. Loads environment variables (prompts to regenerate suffix in DevContainer)
+2. Validates prerequisites (az, kubectl, helm, jq)
+3. Checks Azure CLI login status
+4. Creates log file in `logs/deployment-YYYYMMDD-HHMMSS.log`
+5. Runs infrastructure creation (step 2) - includes Container Insights
+6. Configures workload identity (step 3)
+7. Installs CNPG operator v1.27.1 (step 4)
+8. Installs Barman Cloud Plugin v0.8.0 (step 4a)
+9. Deploys PostgreSQL cluster (step 5)
+10. Configures Grafana monitoring (step 6)
+11. Configures Azure Monitor Managed Prometheus (step 6a)
+12. Displays connection info (step 7)
 
-**Usage**:
+**Usage (DevContainer)**:
+```bash
+source .env
+./deploy-all.sh
+```
+
+**Usage (Manual)**:
 ```bash
 source ../config/environment-variables.sh
 ./deploy-all.sh
 ```
 
-**Output**: Complete PostgreSQL HA environment ready for use.
+**Output**: 
+- Complete PostgreSQL HA environment ready for use
+- Detailed logs in `logs/` directory
 
 ---
 
@@ -94,6 +107,65 @@ source ../config/environment-variables.sh
 ```
 
 **Prerequisites**: Azure CLI logged in, environment variables loaded.
+
+---
+
+---
+
+### `setup-prerequisites.sh` - Tool Installation
+
+**Purpose**: Installs all required tools for manual setup (non-DevContainer environments).
+
+**What it installs**:
+- Azure CLI (with aks-preview extension)
+- kubectl
+- Helm
+- jq
+- netcat
+- Krew (kubectl plugin manager)
+- CNPG kubectl plugin
+
+**Usage**:
+```bash
+chmod +x setup-prerequisites.sh
+./setup-prerequisites.sh
+```
+
+**Prerequisites**: None (run this first on fresh systems).
+
+**Platform Support**:
+- macOS (via Homebrew)
+- Linux (Ubuntu/Debian)
+- Windows (manual installation links provided)
+
+---
+
+### `regenerate-env.sh` - Environment Regeneration
+
+**Purpose**: Regenerates `.env` file with new suffix for fresh deployment (DevContainer only).
+
+**What it does**:
+- Backs up existing `.env` to `.env.backup-YYYYMMDD-HHMMSS`
+- Prompts for confirmation (unless `--yes` flag used)
+- Deletes old `.env`
+- Runs `.devcontainer/generate-env.sh` to create new `.env`
+- New suffix ensures unique resource names
+
+**Usage**:
+```bash
+# Interactive (prompts for confirmation)
+./regenerate-env.sh
+
+# Non-interactive (for automation)
+./regenerate-env.sh --yes
+```
+
+**Prerequisites**: DevContainer environment.
+
+**When to use**:
+- Starting fresh deployment with new resources
+- Testing deployment automation
+- Avoiding resource name conflicts
 
 ---
 
@@ -205,7 +277,69 @@ source ../config/environment-variables.sh
 
 **Prerequisites**: Cluster deployed (step 5).
 
-**Next Steps**: Import dashboard from `../grafana/grafana-cnpg-ha-dashboard.json`.
+**Next Steps**: Import dashboard using `06b-import-grafana-dashboard.sh` or manually.
+
+---
+
+### `06a-configure-azure-monitor-prometheus.sh` - Prometheus Scraping
+
+**Purpose**: Configures Azure Monitor Managed Prometheus to scrape CNPG metrics.
+
+**What it does**:
+- Enables Azure Monitor Managed Prometheus addon on AKS
+- Configures PodMonitor scraping for CNPG metrics
+- Sets up Prometheus data source in Grafana
+- Validates metrics collection
+
+**Usage**:
+```bash
+source ../config/environment-variables.sh
+./06a-configure-azure-monitor-prometheus.sh
+```
+
+**Prerequisites**: 
+- Cluster deployed (step 5)
+- Grafana configured (step 6)
+
+**Metrics Collected**:
+- PostgreSQL instance metrics
+- Connection pool statistics
+- Replication lag and status
+- WAL archiving status
+- Database performance metrics
+
+---
+
+### `06b-import-grafana-dashboard.sh` - Dashboard Import ⭐
+
+**Purpose**: Automatically import pre-built Grafana dashboard for CNPG monitoring.
+
+**What it does**:
+- Gets Grafana endpoint from Azure
+- Retrieves Prometheus datasource UID
+- Configures dashboard JSON with correct datasource
+- Imports dashboard via Azure CLI
+- Provides dashboard URL for access
+
+**Usage**:
+```bash
+source ../config/environment-variables.sh
+./06b-import-grafana-dashboard.sh
+```
+
+**Prerequisites**: 
+- Grafana configured (step 6)
+- Azure Monitor Prometheus configured (step 6a)
+
+**Dashboard Features**:
+- 9 monitoring panels
+- Real-time metrics visualization
+- Cluster health status
+- Connection pooling metrics
+- Replication lag monitoring
+- WAL archiving status
+
+**Output**: Direct URL to imported dashboard.
 
 ---
 

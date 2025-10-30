@@ -10,13 +10,18 @@ Your command cheat sheet for PostgreSQL HA on AKS operations.
 
 | File | Purpose |
 |------|---------|
+| `.env` | Auto-generated environment variables (DevContainer only, gitignored) |
+| `.devcontainer/generate-env.sh` | Auto-generates .env with unique suffix |
 | `SETUP_COMPLETE.md` | Getting started guide |
 | `docs/README.md` | Full documentation |
 | `.github/copilot-instructions.md` | AI assistant guidance |
-| `config/environment-variables.sh` | Bash environment configuration |
-| `scripts/deploy-all.sh` | Master deployment orchestration |
+| `config/environment-variables.sh` | Bash environment configuration template |
+| `scripts/deploy-all.sh` | Master deployment orchestration (8 steps with logging) |
+| `scripts/regenerate-env.sh` | Regenerate .env with new suffix |
+| `scripts/setup-prerequisites.sh` | Install required tools |
 | `scripts/02-create-infrastructure.sh` | Creates Azure resources |
 | `scripts/05-deploy-postgresql-cluster.sh` | Deploys PostgreSQL HA cluster |
+| `scripts/06b-import-grafana-dashboard.sh` | Import Grafana dashboard |
 | `scripts/08-test-pgbench.sh` | Tests pgbench performance tool |
 | `kubernetes/postgresql-cluster.yaml` | Reference manifest (not used in deployment) |
 
@@ -29,22 +34,44 @@ chmod +x scripts/setup-prerequisites.sh
 ```
 
 ### 2. Configure
+
+**DevContainer (Recommended)**:
+```bash
+# .env is auto-generated at container startup
+source .env
+
+# Optional: Regenerate with new suffix
+./scripts/regenerate-env.sh
+```
+
+**Manual Setup**:
 ```bash
 # Edit environment variables
 code config/environment-variables.sh
 ```
 
 ### 3. Deploy
+
+**DevContainer**:
+```bash
+# Load auto-generated environment variables
+source .env
+
+# Deploy all components (8 automated steps with logging)
+./scripts/deploy-all.sh
+```
+
+**Manual Setup**:
 ```bash
 # Load environment variables into current terminal session
 # 'source' executes the script in the current shell context
 source config/environment-variables.sh
 
-# Deploy all components (7 automated steps)
+# Deploy all components (8 automated steps with logging)
 ./scripts/deploy-all.sh
 ```
 
-> **Key Concept**: The command loads configuration into your active terminal session, making variables like `$RESOURCE_GROUP_NAME`, `$AKS_CLUSTER_VERSION`, and `$DISK_IOPS` available to deployment scripts. Without this step, scripts won't know what values to use.
+> **Key Concept**: The command loads configuration into your active terminal session, making variables like `$RESOURCE_GROUP_NAME`, `$AKS_CLUSTER_VERSION`, and `$DISK_IOPS` available to deployment scripts. Without this step, scripts won't know what values to use. DevContainer auto-generates `.env` with unique resource names.
 
 ## ✅ Validate Deployment
 

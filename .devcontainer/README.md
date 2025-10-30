@@ -87,6 +87,11 @@ newgrp docker
 | **kubectl** | 1.31.0+ | Kubernetes cluster management |
 | **Helm** | 3.13.0+ | Kubernetes package manager |
 | **jq** | 1.7.1+ | JSON query and processing |
+| **bc** | Latest | Command-line calculator (for pgbench calculations) |
+| **psql** | Latest | PostgreSQL client for database connections |
+| **netcat (nc)** | Latest | Network connectivity testing |
+| **kubectl-cnpg** | 1.27.1 | CloudNativePG plugin for cluster management |
+| **Krew** | Latest | kubectl plugin manager |
 | **OpenSSL** | 1.1.1+ | Cryptography and SSL tools |
 | **Git** | Latest | Version control |
 | **Make** | Latest | Build automation |
@@ -126,9 +131,23 @@ cd /workspaces/azure-postgresql-ha-aks-workshop
 
 ### Running Deployment
 
-**Bash (Recommended)**:
+**In DevContainer (Recommended)**:
 ```bash
-# Load environment variables
+# Environment variables are auto-generated at container startup
+# Load them into your terminal session
+source .env
+
+# Verify configuration
+echo "Resource Group: $RESOURCE_GROUP_NAME"
+echo "AKS Cluster: $AKS_PRIMARY_CLUSTER_NAME"
+
+# Deploy all components (8 automated steps)
+./scripts/deploy-all.sh
+```
+
+**Alternative - Manual Configuration**:
+```bash
+# Load environment variables from template
 source config/environment-variables.sh
 
 # Deploy all components
@@ -149,9 +168,21 @@ Main configuration file that defines:
 
 ### `.devcontainer/post-create.sh`
 Script that runs after container creation:
-- Installs additional tools
-- Verifies installations
+- Installs additional tools (jq, bc, psql, netcat, tree, htop, etc.)
+- Installs CNPG kubectl plugin v1.27.1
+- Installs Krew (kubectl plugin manager)
+- Configures Azure CLI extensions (amg)
+- Verifies all installations
 - Shows quick reference
+
+### `.devcontainer/generate-env.sh`
+Auto-generates environment variables on container startup:
+- Creates persistent `.env` file with unique resource names
+- Generates random suffix for resource uniqueness
+- Generates DNS prefix
+- Detects public IP for firewall rules
+- Creates environment variables with proper Azure naming conventions
+- Prevents regeneration if `.env` already exists
 
 ---
 
@@ -181,14 +212,19 @@ az version
 kubectl version --client
 helm version
 jq --version
+bc --version
+psql --version
+kubectl cnpg version
 
 # Navigate to project
 cd /workspaces/azure-postgresql-ha-aks-workshop
 
-# Load environment variables
-source config/environment-variables.sh
+# Load auto-generated environment variables
+source .env
 
 # Review configuration
+echo "Suffix: $SUFFIX"
+echo "Resource Group: $RESOURCE_GROUP_NAME"
 echo "Region: $PRIMARY_CLUSTER_REGION"
 echo "AKS Version: $AKS_CLUSTER_VERSION"
 
@@ -329,9 +365,11 @@ docker system prune -a
 2. ✅ Install VS Code Remote - Containers extension
 3. ✅ Open project folder in VS Code
 4. ✅ Run "Dev Containers: Reopen in Container"
-5. ✅ Wait for container build to complete
-6. ✅ Verify tools: `az version`, `kubectl version`, etc.
-7. ✅ Start deploying!
+5. ✅ Wait for container build to complete (2-5 minutes)
+6. ✅ `.env` file is auto-generated with unique resource names
+7. ✅ Verify tools: `az version`, `kubectl version`, `kubectl cnpg version`
+8. ✅ Load environment: `source .env`
+9. ✅ Start deploying: `./scripts/deploy-all.sh`
 
 ---
 
