@@ -51,11 +51,11 @@ export PGPASSWORD=$(kubectl get secret "${APP_SECRET}" -n "${PG_NAMESPACE}" -o j
 echo "✓ Prerequisites validated"
 echo ""
 
-# Clean up any existing test pod from previous runs
-if kubectl get pod pgbench-client-scenario2b -n "${PG_NAMESPACE}" &>/dev/null; then
-  echo "🧹 Cleaning up existing test pod from previous run..."
-  kubectl delete pod pgbench-client-scenario2b -n "${PG_NAMESPACE}" --force --grace-period=0 &>/dev/null || true
-  sleep 3
+# Clean up any existing test deployment from previous runs
+if kubectl get deployment pgbench-client-scenario2b -n "${PG_NAMESPACE}" &>/dev/null; then
+  echo "🧹 Cleaning up existing test deployment from previous run..."
+  kubectl delete deployment pgbench-client-scenario2b -n "${PG_NAMESPACE}" --force --grace-period=0 &>/dev/null || true
+  sleep 5
   echo "✓ Cleanup complete"
   echo ""
 fi
@@ -78,45 +78,56 @@ kubectl create configmap simple-failover-workload \
   --from-file=simple-failover-workload.sql="$SCRIPT_DIR/simple-failover-workload.sql" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
-# Deploy pgbench pod
-cat > "$OUTPUT_DIR/pgbench-pod.yaml" << EOF
-apiVersion: v1
-kind: Pod
+# Deploy pgbench deployment with 3 replicas (Phase 5: Multi-pod for higher throughput)
+cat > "$OUTPUT_DIR/pgbench-deployment.yaml" << EOF
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: pgbench-client-scenario2b
   namespace: ${PG_NAMESPACE}
 spec:
-  restartPolicy: Never
-  containers:
-  - name: pgbench
-    image: postgres:17
-    command: ["/bin/bash", "-c"]
-    args:
-    - |
-      until pg_isready -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME}; do sleep 1; done
-      echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
-      pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=prepared \
-        --max-tries=3 \
-        --file=/workload/simple-failover-workload.sql --time=300 \
-        -c 500 -j 8 \
-        --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
-      echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
-    env:
-    - name: PGPASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: ${APP_SECRET}
-          key: password
-    volumeMounts:
-    - {name: logs, mountPath: /logs}
-    - {name: workload, mountPath: /workload}
-  volumes:
-  - {name: logs, emptyDir: {}}
-  - {name: workload, configMap: {name: simple-failover-workload}}
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pgbench-client-scenario2b
+  template:
+    metadata:
+      labels:
+        app: pgbench-client-scenario2b
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: pgbench
+        image: postgres:17
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          until pg_isready -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME}; do sleep 1; done
+          echo "Start: \$(date '+%Y-%m-%d %H:%M:%S')"
+          pgbench -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} --protocol=prepared \
+            --max-tries=3 \
+            --file=/workload/simple-failover-workload.sql --time=300 \
+            -c 100 -j 4 \
+            --progress=10 --log --log-prefix=/logs/pgbench 2>&1 | tee /logs/pgbench-output.log
+          echo "End: \$(date '+%Y-%m-%d %H:%M:%S')"
+          # Keep pod running to collect logs
+          sleep 3600
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_SECRET}
+              key: password
+        volumeMounts:
+        - {name: logs, mountPath: /logs}
+        - {name: workload, mountPath: /workload}
+      volumes:
+      - {name: logs, emptyDir: {}}
+      - {name: workload, configMap: {name: simple-failover-workload}}
 EOF
 
-kubectl apply -f "$OUTPUT_DIR/pgbench-pod.yaml" >/dev/null
-kubectl wait --for=condition=Ready pod/pgbench-client-scenario2b -n "${PG_NAMESPACE}" --timeout=60s >/dev/null
+kubectl apply -f "$OUTPUT_DIR/pgbench-deployment.yaml" >/dev/null
+kubectl wait --for=condition=Available deployment/pgbench-client-scenario2b -n "${PG_NAMESPACE}" --timeout=60s >/dev/null
 
 echo "✓ Workload started through PgBouncer"
 echo ""
@@ -159,7 +170,16 @@ kubectl run consistency-check-post --rm -i --restart=Never --image=postgres:17 -
     psql -h ${POOLER_SERVICE} -U ${PG_DATABASE_USER} -d ${PG_DATABASE_NAME} -t -c 'SELECT sum(abalance) as account_sum FROM pgbench_accounts;'
     " | tee "$OUTPUT_DIR/post-failover-consistency.log"
 
-kubectl logs pgbench-client-scenario2b -n "${PG_NAMESPACE}" > "$OUTPUT_DIR/pgbench-output.log"
+# Collect logs from all pgbench pods in the deployment
+echo "📋 Collecting logs from all pgbench pods..."
+kubectl get pods -n "${PG_NAMESPACE}" -l "app=pgbench-client-scenario2b" -o name | while read pod; do
+  POD_NAME=$(basename "$pod")
+  echo "  Collecting logs from $POD_NAME..."
+  kubectl logs "$POD_NAME" -n "${PG_NAMESPACE}" > "$OUTPUT_DIR/pgbench-output-${POD_NAME}.log" 2>&1
+done
+
+# Aggregate all pod logs into a single file for analysis
+cat "$OUTPUT_DIR"/pgbench-output-*.log > "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null || echo "No pod logs found"
 
 # Phase 4: Enhanced Latency Percentile Analysis
 echo ""
@@ -174,9 +194,13 @@ if [ -f "$OUTPUT_DIR/pgbench-output.log" ]; then
   echo "Computing latency percentiles from transaction log..."
   
   # Note: pgbench with --log creates files like pgbench.0.log, pgbench.1.log, etc.
-  # We need to extract from the pod's log volume
-  kubectl exec pgbench-client-scenario2b -n "${PG_NAMESPACE}" -c pgbench -- \
-    bash -c 'cat /logs/pgbench.*.log 2>/dev/null' > "$OUTPUT_DIR/pgbench-transactions.log" 2>/dev/null || echo "Transaction logs not available in pod"
+  # We need to extract from each pod's log volume
+  echo "  Extracting transaction logs from all pods..."
+  kubectl get pods -n "${PG_NAMESPACE}" -l "app=pgbench-client-scenario2b" -o name | while read pod; do
+    POD_NAME=$(basename "$pod")
+    kubectl exec "$POD_NAME" -n "${PG_NAMESPACE}" -c pgbench -- \
+      bash -c 'cat /logs/pgbench.*.log 2>/dev/null' >> "$OUTPUT_DIR/pgbench-transactions.log" 2>/dev/null || echo "  Transaction logs not available in $POD_NAME"
+  done
   
   if [ -s "$OUTPUT_DIR/pgbench-transactions.log" ]; then
     # Extract latency column (4th field) and calculate percentiles
@@ -286,8 +310,49 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "                    TEST RESULTS SUMMARY"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-grep "tps" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null | tail -1 || echo "TPS: See detailed log"
-grep -E "latency (average|stddev)" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null || echo "Latency: See detailed log"
+
+# Aggregate metrics from all pods
+echo "Multi-Pod Test Configuration:"
+echo "  Deployment: pgbench-client-scenario2b"
+echo "  Replicas:   3 pods"
+echo "  Clients:    100 per pod (300 total)"
+echo "  Threads:    4 per pod (12 total)"
+echo ""
+
+# Extract per-pod metrics
+POD_COUNT=0
+TOTAL_TPS=0
+TOTAL_TRANSACTIONS=0
+
+echo "Per-Pod Results:"
+for log_file in "$OUTPUT_DIR"/pgbench-output-*.log; do
+  if [ -f "$log_file" ]; then
+    POD_NAME=$(basename "$log_file" | sed 's/pgbench-output-//;s/.log//')
+    POD_COUNT=$((POD_COUNT + 1))
+    
+    POD_TPS=$(grep "tps = " "$log_file" 2>/dev/null | grep "including" | awk '{print $3}' || echo "0")
+    POD_TXS=$(grep "number of transactions actually processed:" "$log_file" 2>/dev/null | awk '{print $6}' || echo "0")
+    POD_LATENCY=$(grep "latency average = " "$log_file" 2>/dev/null | awk '{print $4}' || echo "N/A")
+    
+    TOTAL_TPS=$(echo "$TOTAL_TPS + $POD_TPS" | bc)
+    TOTAL_TRANSACTIONS=$((TOTAL_TRANSACTIONS + POD_TXS))
+    
+    printf "  Pod %d (%s):\n" "$POD_COUNT" "$POD_NAME"
+    printf "    TPS:          %.2f\n" "$POD_TPS"
+    printf "    Transactions: %s\n" "$POD_TXS"
+    printf "    Latency:      %s ms\n" "$POD_LATENCY"
+    echo ""
+  fi
+done
+
+echo "Aggregated Results:"
+printf "  Total Pods:          %d\n" "$POD_COUNT"
+printf "  Total TPS:           %.2f\n" "$TOTAL_TPS"
+printf "  Total Transactions:  %d\n" "$TOTAL_TRANSACTIONS"
+echo ""
+
+# Show sample pod latency (all should be similar)
+grep -E "latency (average|stddev)" "$OUTPUT_DIR/pgbench-output.log" 2>/dev/null | head -2 || echo "Latency: See individual pod logs"
 echo ""
 echo "Failover: $FAILOVER_TIME → $FAILOVER_COMPLETE (${TOTAL_FAILOVER_SECONDS}s)"
 echo "Deleted: $PRIMARY_POD → New: $NEW_PRIMARY"
