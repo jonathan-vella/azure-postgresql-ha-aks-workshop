@@ -19,7 +19,7 @@ fi
 # Set cluster-specific variables
 CLUSTER_NAME="${PG_PRIMARY_CLUSTER_NAME}"
 POOLER_SERVICE="${PG_PRIMARY_CLUSTER_NAME}-pooler-rw"
-APP_SECRET="${PG_PRIMARY_CLUSTER_NAME}-app"
+APP_SECRET="pg-app-secret"
 
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║ Scenario 2b: AKS Pod → PgBouncer Pooler → Simulated Failure   ║"
