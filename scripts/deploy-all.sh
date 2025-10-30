@@ -12,10 +12,18 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Load environment variables FIRST (before logging setup)
+if [ -f "${SCRIPT_DIR}/../.env" ]; then
+    source "${SCRIPT_DIR}/../.env"
+fi
+
 # Setup automatic logging
 LOGS_DIR="${SCRIPT_DIR}/../logs"
 mkdir -p "$LOGS_DIR"
 LOG_FILE="${LOGS_DIR}/deployment-$(date +%Y%m%d-%H%M%S).log"
+
+# Start logging to file AND console
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "================================================"
 echo "PostgreSQL HA Deployment on Azure AKS"
@@ -23,19 +31,15 @@ echo "================================================"
 echo "📝 Logging to: $LOG_FILE"
 echo ""
 
-# Start logging (after initial messages)
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-# Load environment variables
+# Display environment configuration
 echo "Step 1/8: Loading environment variables..."
 if [ -f "${SCRIPT_DIR}/../.env" ]; then
-    source "${SCRIPT_DIR}/../.env"
     echo -e "${GREEN}✓ Found existing .env file${NC}"
     echo ""
     echo "📋 Current configuration:"
-    echo "   Suffix:         $SUFFIX"
-    echo "   Resource Group: $RESOURCE_GROUP_NAME"
-    echo "   AKS Cluster:    $AKS_PRIMARY_CLUSTER_NAME"
+    echo "   Suffix:         ${SUFFIX:-not set}"
+    echo "   Resource Group: ${RESOURCE_GROUP_NAME:-not set}"
+    echo "   AKS Cluster:    ${AKS_PRIMARY_CLUSTER_NAME:-not set}"
     echo ""
     
     read -p "🔄 Generate new suffix for fresh deployment? (y/N): " -n 1 -r
