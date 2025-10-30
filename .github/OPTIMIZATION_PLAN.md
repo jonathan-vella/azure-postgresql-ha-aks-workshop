@@ -1,13 +1,16 @@
 # PostgreSQL HA Optimization Plan
-**Version**: 1.0  
+**Version**: 1.1  
 **Date**: October 30, 2025  
 **Status**: Ready for Implementation  
+**Documentation Sources**: 
+- Microsoft Azure AKS PostgreSQL HA Deployment Guide
+- CloudNativePG v1.27 Official Documentation (Benchmarking, Connection Pooling, Monitoring)
 
 ---
 
 ## Executive Summary
 
-Based on failover testing results and Microsoft Azure AKS PostgreSQL HA guidelines, this plan addresses three critical areas:
+Based on failover testing results, **Microsoft Azure AKS PostgreSQL HA guidelines**, and **CloudNativePG official best practices**, this plan addresses three critical areas:
 
 1. **Auth Recovery**: Reduce 20s auth delay to <5s (RTO improvement)
 2. **Performance**: Scale from 746 TPS to 2,000-3,000 TPS (capacity improvement)  
@@ -24,6 +27,102 @@ Based on failover testing results and Microsoft Azure AKS PostgreSQL HA guidelin
 - RTO: <15 seconds total (improved auth recovery)
 - RPO: 0 seconds (maintain)
 - Latency: <100ms p95
+
+---
+
+## CloudNativePG Best Practices Integration
+
+### Benchmarking Methodology (CNPG Official)
+
+**Use `kubectl cnpg pgbench` Plugin** - CloudNativePG provides a Kubernetes-native approach to benchmarking:
+
+```bash
+# Initialize database with proper scale factor
+kubectl cnpg pgbench \
+  --job-name pgbench-init \
+  --db-name appdb \
+  pg-primary-cnpg-5ohtf3vb \
+  -- --initialize --scale 50
+
+# Run benchmark test
+kubectl cnpg pgbench \
+  --job-name pgbench-run \
+  --db-name appdb \
+  --ttl 600 \
+  pg-primary-cnpg-5ohtf3vb \
+  -- --time 300 --client 100 --jobs 4 --protocol=prepared
+```
+
+**Key Benefits**:
+- ✅ Automatic Kubernetes job creation and management
+- ✅ TTL-based automatic cleanup
+- ✅ Node selector support for dedicated benchmark nodes
+- ✅ Dry-run capability for manifest customization
+- ✅ Integrated with CNPG cluster lifecycle
+
+**Scale Factor Recommendations** (from CNPG docs):
+- **scale=50**: 5M rows, ~650MB (current target for this plan)
+- **scale=1000**: 100M rows, ~13GB (CNPG example for high-volume testing)
+
+### PgBouncer Configuration (CNPG Managed)
+
+**Authentication Mechanism** - CNPG automatically configures:
+- `auth_user`: `cnpg_pooler_pgbouncer` (auto-created by operator)
+- `auth_query`: Lookup function in `postgres` database
+- **TLS certificate authentication** for `auth_user` (secure, no password needed)
+- Auto-sync of secrets and configuration
+
+**Critical Parameters for Failover Recovery**:
+```yaml
+pgbouncer:
+  parameters:
+    server_lifetime: "300"        # 5 min (CNPG allows customization)
+    server_idle_timeout: "120"    # 2 min (CNPG allows customization)
+    server_check_delay: "30"      # Health check frequency
+    server_connect_timeout: "5"   # Connection timeout
+    server_fast_close: "1"        # Fast connection close during PAUSE
+```
+
+**CNPG-Specific Features**:
+- **PAUSE/RESUME support**: Declarative `paused: true/false` in Pooler spec
+- **Automatic secret management**: `auth_query` credentials auto-synced
+- **Prometheus metrics**: Built-in exporter on port 9127 with `cnpg_pgbouncer_*` metrics
+- **Pooler lifecycle independence**: Cluster deletion doesn't delete pooler (manual control)
+
+### Monitoring Best Practices (CNPG Prometheus Metrics)
+
+**Available Metrics for Optimization Tracking**:
+```
+cnpg_pgbouncer_pools_maxwait              # Client queue wait time (key RTO metric)
+cnpg_pgbouncer_pools_sv_idle              # Idle server connections
+cnpg_pgbouncer_pools_sv_active            # Active server connections
+cnpg_pgbouncer_pools_cl_waiting           # Clients waiting for connection
+cnpg_pgbouncer_stats_avg_query_time       # Query latency (microseconds)
+cnpg_pgbouncer_stats_avg_wait_time        # Client wait time (microseconds)
+cnpg_pgbouncer_stats_total_query_count    # Total queries processed
+```
+
+**Integration with Phase 4**: Use these CNPG metrics for enhanced monitoring dashboards.
+
+### Storage Benchmarking (CNPG `fio` Plugin)
+
+**Optional Pre-Optimization Validation**:
+```bash
+# Test Premium SSD v2 disk performance
+kubectl cnpg fio fio-baseline \
+  -n cnpg-database \
+  --storageClass premium-ssd-v2-retain \
+  --pvcSize 128Gi
+
+# View results
+kubectl port-forward -n cnpg-database deployment/fio-baseline 8000
+```
+
+**Expected Results** (Premium SSD v2, 40K IOPS, 1,250 MB/s):
+- Sequential write: ~1,200 MB/s
+- Random read IOPS: ~40,000
+- Random write IOPS: ~35,000
+- Latency: <1ms p99
 
 ---
 
@@ -184,7 +283,26 @@ autovacuum_vacuum_cost_limit: "2400"  # Vacuum cost limit
 - **Expected improvement**: Per-client TPS from 7.46 → 15-20 TPS
 - **Total capacity**: 100 clients × 20 TPS = 2,000 TPS sustained
 
-#### Implementation
+#### Implementation (CNPG Native Method)
+
+**Option A: Use CNPG kubectl plugin** (Recommended - Kubernetes-native):
+
+```bash
+# Initialize with CNPG plugin (creates Kubernetes Job)
+kubectl cnpg pgbench \
+  --job-name pgbench-init-scale50 \
+  --db-name appdb \
+  --ttl 600 \
+  pg-primary-cnpg-5ohtf3vb \
+  -- --initialize --scale 50
+
+# Monitor initialization progress
+kubectl logs job/pgbench-init-scale50 -n cnpg-database -f
+
+# Initialization time: ~5-10 minutes for 5M rows (~650MB)
+```
+
+**Option B: Direct kubectl run** (Alternative):
 
 **Create initialization script**: `scripts/failover-testing/init-database-scale50.sh`
 
@@ -463,20 +581,69 @@ echo "Auth Recovery: ${AUTH_RECOVERY_TIME}s (Target: <5s)"
 
 ## References
 
-1. **Microsoft Azure AKS PostgreSQL HA Guide**  
-   https://learn.microsoft.com/en-us/azure/aks/deploy-postgresql-ha?tabs=azuredisk#postgresql-performance-parameters
+### Microsoft Azure Documentation
+1. **Azure AKS PostgreSQL HA Deployment Guide**  
+   https://learn.microsoft.com/en-us/azure/aks/deploy-postgresql-ha?tabs=azuredisk
+   - PostgreSQL performance parameters (shared_buffers, effective_cache_size, work_mem, etc.)
+   - Resource allocation recommendations (25% shared_buffers, 75% effective_cache_size)
+   - WAL compression and checkpoint tuning (lz4, 15min timeout, 6GB max WAL)
+   - I/O optimization (effective_io_concurrency=64, random_page_cost=1.1)
 
-2. **CloudNativePG Connection Pooling**  
+2. **Azure Well-Architected Framework**  
+   https://learn.microsoft.com/en-us/azure/architecture/framework/
+   - Reliability: Multi-zone deployment, failover patterns
+   - Performance: Resource optimization, capacity planning
+   - Cost: Right-sizing, Premium SSD v2 best practices
+
+### CloudNativePG Official Documentation (v1.27)
+
+3. **CNPG Benchmarking Guide**  
+   https://cloudnative-pg.io/documentation/current/benchmarking/
+   - `kubectl cnpg pgbench` plugin usage (Kubernetes-native benchmarking)
+   - Scale factor recommendations (scale=50 for 5M rows, scale=1000 for 100M rows)
+   - Node selector support for dedicated benchmark nodes
+   - TTL-based automatic job cleanup
+   - `kubectl cnpg fio` for storage performance testing
+
+4. **CNPG Connection Pooling (PgBouncer)**  
    https://cloudnative-pg.io/documentation/current/connection_pooling/
+   - Pooler resource lifecycle and configuration
+   - Authentication mechanism (auth_user, auth_query, TLS certificates)
+   - Configurable PgBouncer parameters (server_lifetime, server_idle_timeout, etc.)
+   - PAUSE/RESUME support for planned maintenance
+   - High availability with multiple pooler instances
 
-3. **PgBouncer Configuration Reference**  
+5. **CNPG Monitoring & Metrics**  
+   https://cloudnative-pg.io/documentation/current/monitoring/
+   https://cloudnative-pg.io/documentation/current/connection_pooling/#monitoring
+   - Built-in Prometheus exporter (port 9127)
+   - PgBouncer metrics (`cnpg_pgbouncer_*` prefix)
+   - Pool statistics (maxwait, client queues, server connections)
+   - Query and transaction metrics (avg_query_time, total_query_count)
+   - PodMonitor resource examples for Prometheus Operator integration
+
+### PostgreSQL & PgBouncer Documentation
+
+6. **PgBouncer Configuration Reference**  
    https://www.pgbouncer.org/config.html
+   - server_lifetime: Connection lifetime before forced closure
+   - server_idle_timeout: Idle connection timeout
+   - auth_query: Custom authentication query for password validation
+   - Pool modes: session, transaction, statement
 
-4. **PostgreSQL Performance Tuning**  
+7. **PostgreSQL Performance Tuning**  
    https://wiki.postgresql.org/wiki/Performance_Optimization
+   - Memory configuration best practices
+   - WAL and checkpoint tuning
+   - Autovacuum optimization
+   - Query performance analysis
 
-5. **pgbench Documentation**  
+8. **pgbench Documentation**  
    https://www.postgresql.org/docs/current/pgbench.html
+   - Initialization options (--initialize, --scale)
+   - Test modes (--protocol=prepared vs simple)
+   - Client configuration (-c, -j, --time)
+   - Custom workload scripts (-f)
 
 ---
 
