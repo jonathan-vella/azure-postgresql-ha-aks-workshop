@@ -318,21 +318,8 @@ kubectl wait --for=condition=Ready \
     -n "$PG_NAMESPACE" \
     cluster/"$PG_PRIMARY_CLUSTER_NAME"
 
-# Deploy PodMonitor for Prometheus metrics collection
-echo "Deploying PodMonitor for cluster monitoring..."
-kubectl apply --context "$AKS_PRIMARY_CLUSTER_NAME" -n "$PG_NAMESPACE" -f - <<EOF
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: ${PG_PRIMARY_CLUSTER_NAME}
-  namespace: ${PG_NAMESPACE}
-spec:
-  selector:
-    matchLabels:
-      cnpg.io/cluster: ${PG_PRIMARY_CLUSTER_NAME}
-  podMetricsEndpoints:
-  - port: metrics
-EOF
+# Note: PodMonitor not needed - Azure Monitor Managed Prometheus automatically scrapes metrics
+echo "✓ Cluster ready - Azure Monitor will automatically collect metrics"
 
 # Get cluster status
 echo "PostgreSQL cluster status:"
