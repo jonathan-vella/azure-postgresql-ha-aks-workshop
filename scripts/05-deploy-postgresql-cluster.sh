@@ -165,6 +165,10 @@ spec:
       autovacuum_vacuum_cost_limit: "2400"       # Microsoft: 2400 (balanced vacuum aggressiveness)
       autovacuum_vacuum_scale_factor: "0.05"     # Vacuum at 5% dead tuples (from 20%)
       
+      # Checkpoint tuning - PHASE 3a: Reduce WAL recovery time during failover
+      checkpoint_timeout: "1min"                 # More frequent checkpoints (default: 5min)
+      checkpoint_completion_target: "0.9"        # Spread I/O over 90% of interval
+      
       # Statistics and query planner
       default_statistics_target: "100"
       
