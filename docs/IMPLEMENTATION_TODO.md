@@ -252,12 +252,25 @@ wal_sender_timeout: "5s"    # Was "3s" - Prevents premature connection drops
 
 ---
 
-## 🟠 PHASE 5: HIGH - Separate WAL Volume (MAINTENANCE REQUIRED)
+## 🟠 PHASE 5: HIGH - Separate WAL Volume (MAINTENANCE REQUIRED) ⏭️ SKIPPED
 
 **Priority:** HIGH (For 8-10s RTO Goal) | **Effort:** 60-90 min | **Risk:** High  
-**Impact:** 1-2s RTO improvement + better I/O isolation + improved RPO=0 reliability
+**Impact:** 1-2s RTO improvement + better I/O isolation + improved RPO=0 reliability  
+**Status:** ⏭️ **SKIPPED - Goal already achieved with Phase 3a**
 
 ⚠️ **CRITICAL: Requires cluster re-creation (DESTRUCTIVE OPERATION)**
+
+### Decision Rationale (October 31, 2025)
+- ✅ **Goal achieved**: 9-10s RTO meets 8-10s target without Phase 5
+- ✅ **Risk avoidance**: Marginal 1-2s benefit doesn't justify:
+  - 60-90 min production downtime
+  - 6 PVCs vs 3 (doubled operational complexity)
+  - Additional $60-75/month cost
+  - Data loss risk during migration
+- ✅ **Non-destructive success**: Checkpoint tuning achieved goal safely
+- ✅ **Cost-benefit analysis**: 1-2s improvement not worth operational burden
+
+**Recommendation**: Implement only if strict SLA requires <9s RTO
 
 ### Why This Matters for RTO
 **Current Bottleneck**: WAL recovery takes 3s (after Phase 3a checkpoint tuning)
@@ -850,6 +863,7 @@ curl http://localhost:9187/metrics | grep cnpg_collector_failover_quorum
 ---
 
 **Created:** October 31, 2025  
-**Last Updated:** October 31, 2025 08:57 UTC  
+**Last Updated:** October 31, 2025 09:15 UTC  
 **Status:** 🎉 **GOAL ACHIEVED** - Phase 1+2+3a Completed | RTO 9-10s (Target: 8-10s)  
-**Next Action:** Optional stability improvements (Phase 3b, 4) or monitoring (Phase 6)
+**Phase 5 Decision:** ⏭️ SKIPPED (goal achieved, risk not justified)  
+**Next Action:** Implementing Phase 3b+4 (stability improvements) + documenting success

@@ -108,7 +108,7 @@ spec:
   failoverDelay: 3                               # Reduced from 5s - faster failover trigger
   startDelay: 3                                  # Reduced from 5s - faster pod startup
   stopDelay: 3                                   # Reduced from 5s - faster pod shutdown
-  switchoverDelay: 3                             # Reduced from 5s - faster planned switchover
+  switchoverDelay: 15                            # PHASE 3b: Increased from 3s - safer WAL archiving during planned switchover
   livenessProbeTimeout: 3                        # Liveness probe timeout (from 30s default)
   
   smartShutdownTimeout: 5                        # Reduced from 10s - faster graceful shutdown
@@ -174,8 +174,8 @@ spec:
       
       # Synchronous replication tuning (RPO = 0, zero data loss)
       synchronous_commit: "remote_apply"         # Strictest - ensure replicas apply changes
-      wal_receiver_timeout: "3s"                 # Reduced from 5s - faster failure detection
-      wal_sender_timeout: "3s"                   # Reduced from 5s - faster failure detection
+      wal_receiver_timeout: "5s"                 # PHASE 4: Increased from 3s - prevents false failovers from network latency
+      wal_sender_timeout: "5s"                   # PHASE 4: Increased from 3s - prevents false failovers from network latency
       wal_receiver_status_interval: "1s"         # Frequent status updates for fast failover
       
       # Memory and resource management
