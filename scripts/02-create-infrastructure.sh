@@ -48,7 +48,7 @@ az storage account create \
     --query 'provisioningState' \
     --output tsv
 
-# Create backup container
+# Create backup container (before network restrictions)
 echo "Creating storage container: $PG_STORAGE_BACKUP_CONTAINER_NAME"
 az storage container create \
     --name "$PG_STORAGE_BACKUP_CONTAINER_NAME" \
@@ -115,7 +115,7 @@ az network vnet create \
     --query "newVNet.provisioningState" \
     --output tsv
 
-# Create AKS subnet
+# Create AKS subnet with service endpoint for Azure Storage
 echo "Creating AKS subnet..."
 AKS_SUBNET_NAME="${AKS_PRIMARY_CLUSTER_NAME}-aks-subnet"
 AKS_SUBNET_ID=$(az network vnet subnet create \
@@ -123,8 +123,29 @@ AKS_SUBNET_ID=$(az network vnet subnet create \
     --vnet-name "$VNET_NAME" \
     --name "$AKS_SUBNET_NAME" \
     --address-prefixes 10.224.0.0/16 \
+    --service-endpoints Microsoft.Storage \
     --query "id" \
     --output tsv)
+
+# Configure storage account network rules (after AKS subnet creation)
+echo "Configuring storage account network access..."
+az storage account network-rule add \
+    --account-name "$PG_PRIMARY_STORAGE_ACCOUNT_NAME" \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --subnet "$AKS_SUBNET_ID" \
+    --output none
+
+az storage account update \
+    --name "$PG_PRIMARY_STORAGE_ACCOUNT_NAME" \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --default-action Deny \
+    --bypass AzureServices \
+    --output none
+
+echo "✓ Storage account network rules configured:"
+echo "  - Default action: Deny"
+echo "  - Allow trusted Microsoft services: Yes"
+echo "  - Allow AKS subnet: $AKS_SUBNET_NAME"
 
 # Create dedicated subnet for failover testing VMs (/27 = 32 IPs, 27 usable)
 echo "Creating VM subnet for failover testing..."
