@@ -4,6 +4,59 @@
 
 This project automates the deployment of a highly available PostgreSQL database on Azure Kubernetes Service (AKS) using CloudNativePG operator with Premium v2 disk storage and PgBouncer connection pooling.
 
+## Quick Reference - Essential Commands
+
+### Before Making Any Changes
+```bash
+# Load environment variables (REQUIRED before any script execution)
+source config/environment-variables.sh
+# Or if .env exists:
+source .env
+```
+
+### Validation Commands (Run Before Committing)
+```bash
+# 1. Syntax check for Bash scripts
+bash -n scripts/your-script.sh
+
+# 2. ShellCheck linting (if modifying any .sh files)
+shellcheck scripts/your-script.sh
+
+# 3. Test script execution (in safe/test environment)
+./scripts/your-script.sh
+
+# 4. Validate YAML manifests
+kubectl apply --dry-run=client -f kubernetes/your-manifest.yaml
+```
+
+### Build & Test Commands
+```bash
+# Full deployment test (requires Azure resources)
+./scripts/deploy-all.sh
+
+# Validation test suite
+./scripts/07a-run-cluster-validation.sh
+
+# Load testing
+./scripts/08-test-pgbench.sh                # Basic load test
+./scripts/08a-test-pgbench-high-load.sh    # High load (8K-10K TPS)
+```
+
+### Common Development Tasks
+```bash
+# Check cluster health
+kubectl cnpg status pg-primary -n cnpg-database
+
+# View operator logs
+kubectl logs -n cnpg-system deployment/cnpg-cloudnative-pg
+
+# Connect to PostgreSQL
+kubectl port-forward svc/pg-primary-rw 5432:5432 -n cnpg-database
+psql -h localhost -U app -d appdb
+```
+
+---
+
 ## Project Overview
 
 - **Version**: v1.0.0 (Semantic Versioning)
@@ -130,26 +183,33 @@ When modifying scripts:
 
 ### Validation Before Committing
 
-Before committing any changes:
+**CRITICAL: Run these checks before committing ANY changes to scripts:**
 
-1. **Syntax Check** (Bash scripts):
+1. **Syntax Check** (Bash scripts) - REQUIRED:
    ```bash
-   # Check script syntax
    bash -n scripts/your-modified-script.sh
    ```
 
-2. **ShellCheck** (if available):
+2. **ShellCheck Linting** - REQUIRED if modifying .sh files:
    ```bash
    shellcheck scripts/your-modified-script.sh
    ```
+   ShellCheck is installed in the DevContainer environment at `/usr/bin/shellcheck` (version 0.9.0+)
+   
+   **Note**: SC1091 (info) warnings about "Not following" sourced files are expected and can be ignored
 
-3. **Test Execution** (in test environment):
+3. **Test Execution** (in test environment) - REQUIRED:
    ```bash
-   # Load environment
+   # Load environment first
    source config/environment-variables.sh
    
-   # Run the modified script
+   # Run the modified script to verify it works
    ./scripts/your-modified-script.sh
+   ```
+
+4. **YAML Validation** (if modifying Kubernetes manifests):
+   ```bash
+   kubectl apply --dry-run=client -f kubernetes/your-manifest.yaml
    ```
 
 ## Development Flow
