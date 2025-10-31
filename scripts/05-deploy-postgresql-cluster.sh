@@ -169,11 +169,13 @@ spec:
     
     # Synchronous replication for RPO = 0 (zero data loss)
     # With method=any and number=1, at least 1 replica must acknowledge commits
-    # dataDurability defaults to "required" - blocks writes if sync replicas unavailable
+    # Phase 1: Explicit dataDurability and failoverQuorum for guaranteed RPO=0
     synchronous:
       method: any
       number: 1
       maxStandbyNamesFromCluster: 1
+      dataDurability: required        # PHASE 1: Explicit RPO=0 guarantee - blocks writes without sync replica
+      failoverQuorum: true             # PHASE 1: CNPG 1.27 quorum-based failover (R+W>N model)
   
   bootstrap:
     initdb:
