@@ -113,6 +113,16 @@ spec:
   
   smartShutdownTimeout: 5                        # Reduced from 10s - faster graceful shutdown
   
+  # Phase 2: Streaming startup probe - ensures replicas are caught up before ready
+  # This prevents promoting replicas that are far behind, reducing RTO
+  probes:
+    startup:
+      type: streaming                            # Wait for streaming replication to be established
+      maximumLag: 1Gi                            # Replica must be within 1GB of primary
+      periodSeconds: 5                           # Check every 5 seconds
+      timeoutSeconds: 5                          # Probe timeout
+      failureThreshold: 20                       # Allow up to 100s for startup (20 * 5s)
+  
   postgresql:
     parameters:
       # Phase 2 Optimization: Microsoft Azure PostgreSQL HA Guidelines
@@ -169,13 +179,12 @@ spec:
     
     # Synchronous replication for RPO = 0 (zero data loss)
     # With method=any and number=1, at least 1 replica must acknowledge commits
-    # Phase 1: Explicit dataDurability and failoverQuorum for guaranteed RPO=0
+    # Phase 1: Explicit dataDurability for guaranteed RPO=0
     synchronous:
       method: any
       number: 1
       maxStandbyNamesFromCluster: 1
       dataDurability: required        # PHASE 1: Explicit RPO=0 guarantee - blocks writes without sync replica
-      failoverQuorum: true             # PHASE 1: CNPG 1.27 quorum-based failover (R+W>N model)
   
   bootstrap:
     initdb:
